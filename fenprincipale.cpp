@@ -11,6 +11,8 @@
 #include <QSqlError>
 #include <QSqlRecord>
 #include <QSqlField>
+#include <QFile>
+#include <QTcpSocket>
 
 FenPrincipale::FenPrincipale() {
     layoutPrincipal = new QGridLayout(this);
@@ -32,32 +34,67 @@ FenPrincipale::FenPrincipale() {
     layoutEditeur = new QHBoxLayout();
     layoutBoutonsAdministration = new QVBoxLayout();
 
+    gbConnexion = new QGroupBox("Connexion");
+    gbAdministration = new QGroupBox("Administration");
+    gbRecherche = new QGroupBox("Recherche");
+
     vueTableSQL = new QTableView();
 
-    bListeAdherents = new QPushButton("Liste adhérents");
+    bConnexion = new QPushButton("Connexion");
+    bRecherche = new QPushButton("Go");
+    bListeAdherents = new QPushButton("Rafraîchir la liste");
+    bAdherentsNonAJour = new QPushButton("Adhérents non à jours");
     bAjouterAdherent = new QPushButton("Ajouter adhérent");
     bCrediterAdherent = new QPushButton("Créditer adhérent");
     bEditerAdherent = new QPushButton("Editer adhérent");
     bSupprimerAdherent = new QPushButton("Supprimer adhérent");
     bParametres = new QPushButton("Paramètres");
+    lineRecherche = new QLineEdit();
 
+    lineRecherche->setEnabled(false);
+    bRecherche->setEnabled(false);
+    bListeAdherents->setEnabled(false);
+    bAdherentsNonAJour->setEnabled(false);
+    bAjouterAdherent->setEnabled(false);
     bCrediterAdherent->setEnabled(false);
     bEditerAdherent->setEnabled(false);
     bSupprimerAdherent->setEnabled(false);
 
-    layoutBoutonsAdministration->addWidget(bListeAdherents);
-    layoutBoutonsAdministration->addWidget(bAjouterAdherent);
-    layoutBoutonsAdministration->addWidget(bCrediterAdherent);
-    layoutBoutonsAdministration->addWidget(bEditerAdherent);
-    layoutBoutonsAdministration->addWidget(bSupprimerAdherent);
-    layoutBoutonsAdministration->addWidget(bParametres);
+    layoutGBConnexion = new QVBoxLayout();
+    layoutGBConnexion->addWidget(bConnexion);
+    layoutGBConnexion->addWidget(bParametres);
+
+    layoutGBRecherche = new QHBoxLayout();
+    layoutGBRecherche->addWidget(lineRecherche);
+    layoutGBRecherche->addWidget(bRecherche);
+
+    layoutGBAdministration = new QVBoxLayout();
+    layoutGBAdministration->addWidget(bListeAdherents);
+    layoutGBAdministration->addWidget(bAdherentsNonAJour);
+    layoutGBAdministration->addWidget(bAjouterAdherent);
+    layoutGBAdministration->addWidget(bCrediterAdherent);
+    layoutGBAdministration->addWidget(bEditerAdherent);
+    layoutGBAdministration->addWidget(bSupprimerAdherent);
+
+    gbConnexion->setLayout(layoutGBConnexion);
+    gbRecherche->setLayout(layoutGBRecherche);
+    gbAdministration->setLayout(layoutGBAdministration);
+
+    layoutBoutonsAdministration->addWidget(gbConnexion);
+    layoutBoutonsAdministration->addWidget(gbRecherche);
+    layoutBoutonsAdministration->addWidget(gbAdministration);
+    layoutBoutonsAdministration->setStretch(2,1);
 
     layoutEditeur->addWidget(vueTableSQL);
     layoutEditeur->addLayout(layoutBoutonsAdministration);
+    layoutEditeur->setStretch(0,1);
 
         // Affichage de l'état des serveurs
 
-    layoutServeurs = new QGridLayout();
+    layoutServeurs = new QHBoxLayout();
+    layoutBoutonsServeurs = new QVBoxLayout();
+
+    layoutAffichageServeurs = new QGridLayout();
 
     labelCommunicationServeur = new QLabel("Communication RaspberryPI : ");
     labelCommunicationSQL = new QLabel("Communication base de données : ");
@@ -65,19 +102,24 @@ FenPrincipale::FenPrincipale() {
     affCommunicationServeur = new QLabel();
     affCommunicationSQL = new QLabel();
 
-    bRafraichirServeur = new QPushButton("Rafraichir");
+    bRafraichirServeur = new QPushButton("Eteindre");
     bRafraichirSQL = new QPushButton("Rafraichir");
 
     affCommunicationServeur->setAlignment(Qt::AlignLeft);
     affCommunicationSQL->setAlignment(Qt::AlignLeft);
 
-    layoutServeurs->addWidget(labelCommunicationServeur, 0, 0);
-    layoutServeurs->addWidget(labelCommunicationSQL,1,0);
-    layoutServeurs->addWidget(affCommunicationServeur, 0, 1);
-    layoutServeurs->addWidget(affCommunicationSQL, 1, 1);
-    layoutServeurs->addWidget(bRafraichirServeur, 0, 3);
-    layoutServeurs->addWidget(bRafraichirSQL, 1, 3);
-    layoutServeurs->setColumnStretch(2,1);
+    layoutAffichageServeurs->addWidget(labelCommunicationServeur, 0, 0);
+    layoutAffichageServeurs->addWidget(labelCommunicationSQL,1,0);
+    layoutAffichageServeurs->addWidget(affCommunicationServeur, 0, 1);
+    layoutAffichageServeurs->addWidget(affCommunicationSQL, 1, 1);
+    layoutAffichageServeurs->setColumnStretch(2,1);
+
+    layoutBoutonsServeurs->addWidget(bRafraichirServeur);
+    layoutBoutonsServeurs->addWidget(bRafraichirSQL);
+
+    layoutServeurs->addLayout(layoutAffichageServeurs);
+    layoutServeurs->addLayout(layoutBoutonsServeurs);
+    layoutServeurs->setStretch(0,1);
 
     layoutAdministration->addLayout(layoutEditeur);
     layoutAdministration->addLayout(layoutServeurs);
@@ -131,17 +173,33 @@ FenPrincipale::FenPrincipale() {
     layoutPrincipal->addWidget(fAfficheurBadge, 1, 0);
     this->setLayout(layoutPrincipal);
 
+    connect(bConnexion, SIGNAL(released()), this, SLOT(connexionBaseAdmin()));
+    connect(bRecherche, SIGNAL(released()), this, SLOT(rechercherAdherent()));
     connect(bListeAdherents, SIGNAL(released()), this, SLOT(listeAdherents()));
+    connect(bAdherentsNonAJour, SIGNAL(released()), this, SLOT(adherentsNonAJour()));
     connect(bAjouterAdherent, SIGNAL(released()), this, SLOT(ajouterAdherent()));
-    connect(bCrediterAdherent, SIGNAL(released()), this, SLOT(affFenConnexion()));
-    connect(bSupprimerAdherent, SIGNAL(released()), this, SLOT(affFenConnexion()));
+    connect(bCrediterAdherent, SIGNAL(released()), this, SLOT(crediterAdherent()));
+    connect(bEditerAdherent, SIGNAL(released()), this, SLOT(editerAdherent()));
+    connect(bSupprimerAdherent, SIGNAL(released()), this, SLOT(supprimerAdherent()));
     connect(bParametres, SIGNAL(released()), this, SLOT(affFenParametres()));
+    connect(vueTableSQL, SIGNAL(clicked(QModelIndex)), this, SLOT(activationBoutonsEdition()));
+    connect(bRafraichirServeur, SIGNAL(released()), this, SLOT(eteindreRaspberry()));
 
-    connect(vueTableSQL, SIGNAL(activated(QModelIndex)), this, SLOT(activationBoutonsEdition()));
+    // Lecture du fichier de configuration
+
+    ipAccueil = "0.0.0.0";
+    ipBaseDonnees = "192.168.30.253";
+    ipRaspberry = "0.0.0.0";
+    nomBaseDonnees = "projectrf";
+    nomUtilisateurLectureBDD = "projectrf";
+    motPasseLectureBDD = "projectrf";
+    portServeur = 50885;
+
+    lireFichierConfiguration("/home/florianb/Documents/Stage Planète Sciences - Eté 2019/PlascilabApp/configuration.json");
 
     // Serveur
 
-    serveur = new Serveur();
+    serveur = new Serveur(portServeur);
     connect(serveur, SIGNAL(messageServeur(QString)), this, SLOT(affMessageServeur(QString)));
     connect(serveur, SIGNAL(receptionIDCarte(QString)), this, SLOT(affAdherent(QString)));
     serveur->ouvrir();
@@ -150,10 +208,10 @@ FenPrincipale::FenPrincipale() {
 
     baseDonnees = new QSqlDatabase();
     *baseDonnees = QSqlDatabase::addDatabase("QMYSQL");
-    baseDonnees->setHostName("192.168.30.253");
-    baseDonnees->setUserName("projectrf");
-    baseDonnees->setPassword("projectrf");
-    baseDonnees->setDatabaseName("projectrf");
+    baseDonnees->setHostName(ipBaseDonnees);
+    baseDonnees->setUserName(nomUtilisateurLectureBDD);
+    baseDonnees->setPassword(motPasseLectureBDD);
+    baseDonnees->setDatabaseName(nomBaseDonnees);
     if (baseDonnees->open()) {
         affMessageSQL("Connecté sur " + baseDonnees->hostName() + " en tant que " + baseDonnees->userName());
     }
@@ -165,14 +223,13 @@ FenPrincipale::FenPrincipale() {
 
     baseAdmin = new QSqlDatabase();
     *baseAdmin = QSqlDatabase::addDatabase("QMYSQL", "Admin");
-    baseAdmin->setHostName("192.168.30.253");
-    baseAdmin->setDatabaseName("projectrf");
+    baseAdmin->setHostName(ipBaseDonnees);
+    baseAdmin->setDatabaseName(nomBaseDonnees);
 
     // Modele SQL
 
     modeleSQL = new QSqlQueryModel;
 }
-
 
 void FenPrincipale::affMessageServeur(const QString &message) {
     affCommunicationServeur->setText(message);
@@ -184,23 +241,121 @@ void FenPrincipale::affMessageSQL(const QString &message) {
 
 void FenPrincipale::affFenParametres() {
     FenParametres fenParametres(this);
+    fenParametres.setIPAccueil(ipAccueil);
+    fenParametres.setIPRPi(ipRaspberry);
+    fenParametres.setPortTCP(portServeur);
+    fenParametres.setIPBaseDonnes(ipBaseDonnees);
+    fenParametres.setNomBaseDonnees(nomBaseDonnees);
+    fenParametres.setUtilisateurBaseDonnees(nomUtilisateurLectureBDD);
+    fenParametres.setMotPasseBaseDonnees(motPasseLectureBDD);
     fenParametres.exec();
+
+    if(fenParametres.result() == QDialog::Rejected) {
+        return;
+    }
+    else {
+        ipAccueil = fenParametres.getIPAccueil();
+        ipRaspberry = fenParametres.getIPRPi();
+        portServeur = fenParametres.getPortTCP();
+        ipBaseDonnees = fenParametres.getIPBaseDonnes();
+        nomBaseDonnees = fenParametres.getNomBaseDonnees();
+        nomUtilisateurLectureBDD = fenParametres.getUtilisateurBaseDonnees();
+        motPasseLectureBDD = fenParametres.getMotPasseBaseDonnees();
+        ecrireFichierConfiguration("/home/florianb/Documents/Stage Planète Sciences - Eté 2019/PlascilabApp/configuration.json");
+        serveur->setPortTCP(portServeur);
+        serveur->reouvrir();
+    }
 }
 
 void FenPrincipale::affAdherent(const QString &idCarteStr) {
-    affBadgeID->setText(idToHex((idCarteStr)).toUpper());
+    QString idCarteHex = idToHex((idCarteStr)).toUpper();
+
+    if(baseDonnees->isOpen()) {
+        QSqlQuery requete(*baseDonnees);
+        requete.prepare("SELECT id, nom, prenom, typeAbn, dateDebutAbn, dateFinAbn FROM Abonnes WHERE id = :_id");
+        requete.bindValue(":_id", idCarteHex);
+        requete.exec();
+        requete.last();
+        if(requete.isValid()) {
+            affBadgeNom->setText(requete.value(1).toString());
+            affBadgePrenom->setText(requete.value(2).toString());
+            if(requete.value(3).toString() != "Aucun") {
+                affBadgeDebutAbn->setText(requete.value(4).toDate().toString("dd/MM/yyyy"));
+                affBadgeFinAbn->setText(requete.value(5).toDate().toString("dd/MM/yyyy"));
+            }
+            else {
+                affBadgeDebutAbn->setText("<Aucun abonnement>");
+                affBadgeFinAbn->setText("<Aucun Abonnement>");
+            }
+
+        }
+        else {
+            affBadgeNom->setText("<Badge non attribué>");
+            affBadgePrenom->setText("<Badge non attribué>");
+            affBadgeDebutAbn->setText("<Badge non attribué>");
+            affBadgeFinAbn->setText("<Badge non attribué>");
+        }
+
+    }
+
+    affBadgeID->setText(idCarteHex);
+}
+
+void FenPrincipale::adherentsNonAJour() {
+    QSqlQuery requete(*baseAdmin);
+    requete.prepare("SELECT * from Abonnes WHERE dateDebutAbn > (:_dateCourante) OR dateFinAbn < (:_dateCourante)");
+    requete.bindValue(":_dateCourante", QDate::currentDate().toString("yyyy-MM-dd"));
+    requete.exec();
+    requete.last();
+
+    modeleSQL->setQuery(requete);
+
+    if(modeleSQL->lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", modeleSQL->lastError().text());
+        return;
+    }
+    modeleSQL->setHeaderData(0, Qt::Horizontal, "ID");
+    modeleSQL->setHeaderData(1, Qt::Horizontal, "Nom");
+    modeleSQL->setHeaderData(2, Qt::Horizontal, "Prenom");
+    modeleSQL->setHeaderData(3, Qt::Horizontal, "Mail");
+    modeleSQL->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
+    modeleSQL->setHeaderData(5, Qt::Horizontal, "Type abn");
+    modeleSQL->setHeaderData(6, Qt::Horizontal, "Nombre abn");
+    modeleSQL->setHeaderData(7, Qt::Horizontal, "Début abn");
+    modeleSQL->setHeaderData(8, Qt::Horizontal, "Fin abn");
+
+    vueTableSQL->setModel(modeleSQL);
+    vueTableSQL->show();
+}
+
+void FenPrincipale::rechercherAdherent() {
+    QSqlQuery requete(*baseAdmin);
+    requete.prepare("SELECT * from Abonnes WHERE id LIKE :_recherche OR nom LIKE :_recherche OR prenom LIKE :_recherche");
+    requete.bindValue(":_recherche", "%" + lineRecherche->text() + "%");
+    requete.exec();
+    requete.last();
+
+    modeleSQL->setQuery(requete);
+
+    if(modeleSQL->lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", modeleSQL->lastError().text());
+        return;
+    }
+    modeleSQL->setHeaderData(0, Qt::Horizontal, "ID");
+    modeleSQL->setHeaderData(1, Qt::Horizontal, "Nom");
+    modeleSQL->setHeaderData(2, Qt::Horizontal, "Prenom");
+    modeleSQL->setHeaderData(3, Qt::Horizontal, "Mail");
+    modeleSQL->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
+    modeleSQL->setHeaderData(5, Qt::Horizontal, "Type abn");
+    modeleSQL->setHeaderData(6, Qt::Horizontal, "Nombre abn");
+    modeleSQL->setHeaderData(7, Qt::Horizontal, "Début abn");
+    modeleSQL->setHeaderData(8, Qt::Horizontal, "Fin abn");
+
+    vueTableSQL->setModel(modeleSQL);
+    vueTableSQL->show();
 }
 
 void FenPrincipale::listeAdherents() {
-    if(bListeAdherents->text() == "Cacher la liste") {
-        bListeAdherents->setText("Liste adhérents");
-        return;
-    }
-
-    if(!connexionBaseAdmin()) {
-        return;
-    }
-
     modeleSQL->setQuery("SELECT * from Abonnes", *baseAdmin);
     if(modeleSQL->lastError().isValid()) {
         QMessageBox::critical(this, "Erreur", modeleSQL->lastError().text());
@@ -216,168 +371,166 @@ void FenPrincipale::listeAdherents() {
 
     vueTableSQL->setModel(modeleSQL);
     vueTableSQL->show();
-
-    baseAdmin->close();
-    bListeAdherents->setText("Cacher la liste");
 }
 
 void FenPrincipale::ajouterAdherent() {
-    if(!connexionBaseAdmin()) {
-        return;
-    }
 
     FenAjouterAdherent fenAjouterAdherent;
     fenAjouterAdherent.exec();
 
     if(fenAjouterAdherent.result() == QDialog::Rejected) {
-        baseAdmin->close();
         return;
     }
 
     if(!baseAdmin->isOpen()) {
         QMessageBox::critical(this, "Erreur", "Erreur : l'accès à la base a été coupé.");
-        baseAdmin->close();
         return;
     }
 
     QSqlQuery requete(*baseAdmin);
-    requete.prepare("INSERT INTO Abonnes (id, nom, prenom, mail, tel, typeAbn, nbAbn, dateDebutAbn, dateFinAbn"
-                    "VALUES (:id, :nom, :prenom, :mail, :tel, :typeAbn, :nbAbn, :dateDebutAbn, :dateFinAbn");
+    requete.prepare("INSERT INTO Abonnes (id, nom, prenom, mail, tel, typeAbn, nbAbn, dateDebutAbn, dateFinAbn) "
+                    "VALUES (:id, :nom, :prenom, :mail, :tel, :typeAbn, :nbAbn, :dateDebutAbn, :dateFinAbn)");
     requete.bindValue(":id", fenAjouterAdherent.getID());
     requete.bindValue(":nom", fenAjouterAdherent.getNom());
     requete.bindValue(":prenom", fenAjouterAdherent.getPrenom());
     requete.bindValue(":mail", fenAjouterAdherent.getMail());
     requete.bindValue(":tel", fenAjouterAdherent.getTel());
     requete.bindValue(":typeAbn", fenAjouterAdherent.getTypeAbn());
-    requete.bindValue(":nbAbn", fenAjouterAdherent.getNbAbn());
-    requete.bindValue(":dateDebutAbn", fenAjouterAdherent.getDateDebutAbn().toString("yyyyy-MM-dd"));
-    requete.bindValue(":dateFinAbn", fenAjouterAdherent.getDateFinAbn().toString("yyyyy-MM-dd"));
+    if(fenAjouterAdherent.getTypeAbn() != "Aucun") {
+        requete.bindValue(":dateDebutAbn", fenAjouterAdherent.getDateDebutAbn().toString("yyyy-MM-dd"));
+        requete.bindValue(":dateFinAbn", fenAjouterAdherent.getDateFinAbn().toString("yyyy-MM-dd"));
+        if(fenAjouterAdherent.getTypeAbn() != "Autre") {
+            requete.bindValue(":nbAbn", fenAjouterAdherent.getNbAbn());
+        }
+        else {
+            requete.bindValue(":nbAbn", 1);
+        }
+    }
+    else {
+        requete.bindValue(":nbAbn", 0);
+        requete.bindValue(":dateDebutAbn", QVariant::Date);
+        requete.bindValue(":dateFinAbn", QVariant::Date);
+    }
+
+
 
     if(!requete.exec()) {
-        QMessageBox::critical(this, "Erreur", "L'édition de la base de données a échoué.");
-        baseAdmin->close();
+        QMessageBox::critical(this, "Erreur", "L'édition de la base de données a échoué." + requete.lastError().text());
         return;
     }
 
-    baseAdmin->close();
     listeAdherents();
 }
 
 void FenPrincipale::editerAdherent() {
-    if(!connexionBaseAdmin()) {
-        return;
-    }
-
     FenEditerAdherent fenEditerAdherent(this);
 
     QSqlQuery requete(*baseAdmin);
-    requete.prepare("SELECT nom, prenom, mail, tel FROM Abonnes WHERE id = (_id)"
-                    "VALUES (:_id)");
+    requete.prepare("SELECT id, nom, prenom, mail, tel FROM Abonnes WHERE id = :_id");
+    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
     requete.exec();
+    requete.last();
 
-    QSqlRecord resultat = requete.record();
-    fenEditerAdherent.setID(resultat.field("id").value().toString());
-    fenEditerAdherent.setNom(resultat.field("nom").value().toString());
-    fenEditerAdherent.setPrenom(resultat.field("prenom").value().toString());
-    fenEditerAdherent.setMail(resultat.field("mail").value().toString());
-    fenEditerAdherent.setTel(resultat.field("tel").value().toString());
+    fenEditerAdherent.setID(requete.value(0).toString());
+    fenEditerAdherent.setNom(requete.value(1).toString());
+    fenEditerAdherent.setPrenom(requete.value(2).toString());
+    fenEditerAdherent.setMail(requete.value(3).toString());
+    fenEditerAdherent.setTel(requete.value(4).toString());
 
     fenEditerAdherent.exec();
 
     if(fenEditerAdherent.result() == QDialog::Rejected) {
-        baseAdmin->close();
         return;
     }
 
     if(!baseAdmin->isOpen()) {
         QMessageBox::critical(this, "Erreur", "Erreur : l'accès à la base a été coupé.");
-        baseAdmin->close();
         return;
     }
 
-    requete.prepare("UPDATE Abonnes SET nom = (_nom), prenom = (_prenom), mail = (_mail), tel = (_tel)"
-                    "VALUES (:_nom, :_prenom, :_mail, :_tel");
+    requete.prepare("UPDATE Abonnes SET nom = :_nom, prenom = :_prenom, mail = :_mail, tel = :_tel WHERE id = :_id");
     requete.bindValue(":_nom", fenEditerAdherent.getNom());
     requete.bindValue(":_prenom", fenEditerAdherent.getPrenom());
     requete.bindValue(":_mail", fenEditerAdherent.getMail());
     requete.bindValue(":_tel", fenEditerAdherent.getTel());
+    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
     requete.exec();
 
     listeAdherents();
 }
 
 void FenPrincipale::crediterAdherent() {
-    if(!connexionBaseAdmin()) {
-        return;
-    }
-
     FenCrediterAdherent fenCrediterAdherent(this);
     fenCrediterAdherent.exec();
 
     if(fenCrediterAdherent.result() == QDialog::Rejected) {
-        baseAdmin->close();
         return;
     }
 
     if(!baseAdmin->isOpen()) {
         QMessageBox::critical(this, "Erreur", "Erreur : l'accès à la base a été coupé.");
-        baseAdmin->close();
         return;
     }
 
     QSqlQuery requete(*baseAdmin);
-    requete.prepare("UPDATE Abonnes SET typeAbn = (_typeAbn), nbAbn = (_nbAbn), dateDebutAbn = (_dateDebutAbn), dateFinAbn = (_dateFinAbn)"
-                    "VALUES (:typeAbn, :_nbAbn, :_dateDebutAbn, :_dateFinAbn");
-    requete.bindValue(":typeAbn", fenCrediterAdherent.getTypeAbn());
-    requete.bindValue(":nbAbn", fenCrediterAdherent.getNbAbn());
-    requete.bindValue(":dateDebutAbn", fenCrediterAdherent.getDateDebutAbn().toString("yyyyy-MM-dd"));
-    requete.bindValue(":dateFinAbn", fenCrediterAdherent.getDateFinAbn().toString("yyyyy-MM-dd"));
+    requete.prepare("UPDATE Abonnes SET typeAbn = :_typeAbn, nbAbn = :_nbAbn, dateDebutAbn = :_dateDebutAbn, dateFinAbn = :_dateFinAbn WHERE id = :_id");
+    requete.bindValue(":_typeAbn", fenCrediterAdherent.getTypeAbn());
+    requete.bindValue(":_nbAbn", fenCrediterAdherent.getNbAbn());
+    requete.bindValue(":_dateDebutAbn", fenCrediterAdherent.getDateDebutAbn().toString("yyyy-MM-dd"));
+    requete.bindValue(":_dateFinAbn", fenCrediterAdherent.getDateFinAbn().toString("yyyy-MM-dd"));
+    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
 
     if(!requete.exec()) {
         QMessageBox::critical(this, "Erreur", "L'édition de la base de données a échoué.");
-        baseAdmin->close();
         return;
     }
 
-    baseAdmin->close();
     listeAdherents();
 }
 
 void FenPrincipale::supprimerAdherent() {
-    if(!connexionBaseAdmin()) {
-        return;
-    }
-
     QSqlQuery requete(*baseAdmin);
-    requete.prepare("SELECT nom, prenom FROM Abonnes WHERE id = (_id)"
-                    "VALUES (:_id)");
-    //TODO : bind
+    requete.prepare("SELECT id, nom, prenom FROM Abonnes WHERE id = (:_id)");
+    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
     requete.exec();
-
-    QSqlRecord resultat = requete.record();
+    requete.last();
 
     int reponse = QMessageBox::question(this, "Supprimer un adhérent", "Etes-vous sûr de vouloir supprimer " +
-                                        resultat.field("prenom").value().toString() + " " +
-                                        resultat.field("nom").value().toString() + " (ID : " +
-                                        resultat.field("id").value().toString() + ") de la base de données ?",
+                                        requete.value(2).toString() + " " +
+                                        requete.value(1).toString() + " (ID : " +
+                                        requete.value(0).toString() + ") de la base de données ?",
                                         QMessageBox::Yes | QMessageBox::No);
 
     if(reponse == QMessageBox::No) {
-        baseAdmin->close();
         return;
     }
     else {
-        requete.prepare("DELETE FROM Abonnes WHERE id =(_id)"
-                        "VALUES (:_id)");
-        //TODO bind
+        requete.prepare("DELETE FROM Abonnes WHERE id = :_id");
+        requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
         requete.exec();
-        baseAdmin->close();
         return;
     }
+
+    listeAdherents();
 
 }
 
 bool FenPrincipale::connexionBaseAdmin() {
+    if(bConnexion->text() == "Déconnexion") {
+        bConnexion->setText("Connexion");
+        vueTableSQL->setModel(nullptr);
+        baseAdmin->close();
+        lineRecherche->setEnabled(false);
+        bRecherche->setEnabled(false);
+        bListeAdherents->setEnabled(false);
+        bAdherentsNonAJour->setEnabled(false);
+        bAjouterAdherent->setEnabled(false);
+        bCrediterAdherent->setEnabled(false);
+        bEditerAdherent->setEnabled(false);
+        bSupprimerAdherent->setEnabled(false);
+        return false;
+    }
+
     FenConnexion *fenConnexion = new FenConnexion(this);
     fenConnexion->exec();
 
@@ -397,8 +550,29 @@ bool FenPrincipale::connexionBaseAdmin() {
         return false;
     }
 
-    return true;
+    lineRecherche->setEnabled(true);
+    bRecherche->setEnabled(true);
+    bListeAdherents->setEnabled(true);
+    bAjouterAdherent->setEnabled(true);
+    bAdherentsNonAJour->setEnabled(true);
+    bConnexion->setText("Déconnexion");
 
+    listeAdherents();
+
+    return true;
+}
+
+void FenPrincipale::eteindreRaspberry() {
+    QTcpSocket client(this);
+
+    std::cout<< "Envoi.." + ipRaspberry.toStdString() << std::endl;
+    client.abort();
+    client.connectToHost("10.10.0.190", 50854);
+    std::cout << client.state() << std::endl;
+    client.write(QByteArray("TERM"));
+    std::cout << client.state() << std::endl;
+    client.close();
+    std::cout<< "Envoi terminé" << std::endl;
 }
 
 QString FenPrincipale::idToHex(const QString &idCarteStr) {
@@ -408,6 +582,73 @@ QString FenPrincipale::idToHex(const QString &idCarteStr) {
             QString::number(idCarte.at(2).toInt(), 16) +
             QString::number(idCarte.at(3).toInt(), 16) +
             QString::number(idCarte.at(4).toInt(), 16);
+}
+
+void FenPrincipale::lireFichierConfiguration(QString nomFichier) {
+    QFile fichierConfiguration(nomFichier);
+
+    if(!fichierConfiguration.open(QIODevice::ReadOnly)) {
+        QMessageBox::critical(this, "Erreur", "Impossible d'ouvrir le fichier de configuration");
+        return;
+    }
+
+    QByteArray donneesConfiguration = fichierConfiguration.readAll();
+
+    QJsonDocument fichierConfigurationJSON(QJsonDocument::fromJson(donneesConfiguration));
+
+    QJsonObject donneesConfigurationJSON = fichierConfigurationJSON.object();
+
+    if(donneesConfigurationJSON.contains("ipAccueil") && donneesConfigurationJSON["ipAccueil"].isString()) {
+        ipAccueil = donneesConfigurationJSON["ipAccueil"].toString();
+    }
+
+    if(donneesConfigurationJSON.contains("ipBaseDonnees") && donneesConfigurationJSON["ipBaseDonnees"].isString()) {
+        ipBaseDonnees = donneesConfigurationJSON["ipBaseDonnees"].toString();
+    }
+
+    if(donneesConfigurationJSON.contains("ipRaspberry") && donneesConfigurationJSON["ipRaspberry"].isString()) {
+        ipRaspberry = donneesConfigurationJSON["ipRaspberry"].toString();
+    }
+
+    if(donneesConfigurationJSON.contains("nomBaseDonnees") && donneesConfigurationJSON["nomBaseDonnees"].isString()) {
+        nomBaseDonnees = donneesConfigurationJSON["nomBaseDonnees"].toString();
+    }
+
+    if(donneesConfigurationJSON.contains("nomUtilisateurLectureBDD") && donneesConfigurationJSON["nomUtilisateurLectureBDD"].isString()) {
+        nomUtilisateurLectureBDD = donneesConfigurationJSON["nomUtilisateurLectureBDD"].toString();
+    }
+
+    if(donneesConfigurationJSON.contains("motPasseLectureBDD") && donneesConfigurationJSON["motPasseLectureBDD"].isString()) {
+        motPasseLectureBDD = donneesConfigurationJSON["motPasseLectureBDD"].toString();
+    }
+
+    if(donneesConfigurationJSON.contains("portServeur") && donneesConfigurationJSON["portServeur"].isDouble()) {
+        portServeur = donneesConfigurationJSON["portServeur"].toInt();
+    }
+
+    fichierConfiguration.close();
+}
+
+void FenPrincipale::ecrireFichierConfiguration(QString nomFichier) {
+    QFile fichierConfiguration(nomFichier);
+
+    if(!fichierConfiguration.open(QIODevice::WriteOnly)) {
+        QMessageBox::critical(this, "Erreur", "Impossible d'ouvrir le fichier de configuration");
+        return;
+    }
+
+    QJsonObject donneesConfigurationJSON;
+    donneesConfigurationJSON["ipAccueil"] = ipAccueil;
+    donneesConfigurationJSON["ipBaseDonnees"] = ipBaseDonnees;
+    donneesConfigurationJSON["ipRaspberry"] = ipRaspberry;
+    donneesConfigurationJSON["nomBaseDonnees"] = nomBaseDonnees;
+    donneesConfigurationJSON["nomUtilisateurLectureBDD"] = nomUtilisateurLectureBDD;
+    donneesConfigurationJSON["motPasseLectureBDD"] = motPasseLectureBDD;
+    donneesConfigurationJSON["portServeur"] = portServeur;
+
+    QJsonDocument fichierConfigurationJSON(donneesConfigurationJSON);
+    fichierConfiguration.write(fichierConfigurationJSON.toJson());
+    fichierConfiguration.close();
 }
 
 void FenPrincipale::activationBoutonsEdition() {
@@ -422,7 +663,21 @@ void FenPrincipale::desactivationBoutonsEdition() {
     bSupprimerAdherent->setEnabled(false);
 }
 
+void FenPrincipale::changementSelectionVueTableSQL() {
+    if(!vueTableSQL->selectionModel()->selectedIndexes().isEmpty() && vueTableSQL->selectionModel()->selectedIndexes().at(0).isValid()) {
+        bCrediterAdherent->setEnabled(true);
+        bEditerAdherent->setEnabled(true);
+        bSupprimerAdherent->setEnabled(true);
+    }
+    else {
+        bCrediterAdherent->setEnabled(false);
+        bEditerAdherent->setEnabled(false);
+        bSupprimerAdherent->setEnabled(false);
+    }
+}
+
 FenPrincipale::~FenPrincipale() {
+    baseDonnees->close();
     delete serveur;
     serveur = nullptr;
 }

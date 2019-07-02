@@ -2,15 +2,16 @@
 #include <QDataStream>
 #include "serveur.h"
 
-Serveur::Serveur() {
+Serveur::Serveur(int portTCP) {
     serveur = new QTcpServer();
+    this->portTCP = portTCP;
 
     client = nullptr;
     tailleMessage = 19;
 }
 
 void Serveur::ouvrir() {
-    if(!serveur->listen(QHostAddress::Any, 50885)) {
+    if(!serveur->listen(QHostAddress::Any, portTCP)) {
         emit messageServeur("Le serveur n'a pas pu être démarré. Raison : " + serveur->errorString());
     }
     else {
@@ -29,6 +30,15 @@ void Serveur::connexion() {
     connect(client, SIGNAL(disconnected()), this, SLOT(deconnexion()));
 }
 
+void Serveur::reouvrir() {
+    serveur->close();
+    ouvrir();
+}
+
+void Serveur::setPortTCP(int portTCP) {
+    this->portTCP = portTCP;
+}
+
 void Serveur::donneesRecues() {
     if(client->bytesAvailable() < tailleMessage)
         return;
@@ -43,6 +53,7 @@ void Serveur::deconnexion() {
 }
 
 Serveur::~Serveur() {
+    serveur->close();
     delete serveur;
     serveur = nullptr;
     delete client;

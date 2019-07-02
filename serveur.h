@@ -9,9 +9,11 @@ class Serveur : public QObject {
     Q_OBJECT
 
     public:
-        Serveur();
+        Serveur(int portTCP);
         ~Serveur();
         void ouvrir();
+        void reouvrir();
+        void setPortTCP(int portTCP);
 
     signals:
         void messageServeur(QString const& message);
@@ -23,6 +25,7 @@ class Serveur : public QObject {
         void deconnexion();
 
     private:
+        int portTCP;
         QTcpServer *serveur;
         QTcpSocket *client;
         quint16 tailleMessage;

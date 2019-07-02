@@ -2,56 +2,62 @@
 #define FENPARAMETRES_H
 
 #include <QDialog>
-#include <QStackedLayout>
+#include <QFormLayout>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QSpinBox>
 
 class FenParametres : public QDialog {
     Q_OBJECT
 
-    public:
-        FenParametres(QWidget *parent = nullptr);
-        ~FenParametres();
+public:
+    FenParametres(QWidget *parent = nullptr);
 
-    public slots:
-        void connexion();
+    QString getIPAccueil() const;
+    QString getIPRPi() const;
+    QString getIPBaseDonnes() const;
+    QString getUtilisateurBaseDonnees() const;
+    QString getMotPasseBaseDonnees() const;
+    QString getNomBaseDonnees() const;
+    int getPortTCP() const;
 
-    private:
-        QStackedLayout *stackingLayout;
+    void setIPAccueil(QString const& ipAccueil);
+    void setIPRPi(QString const& ipRPi);
+    void setIPBaseDonnes(QString const& ipBaseDonnees);
+    void setUtilisateurBaseDonnees(QString const& utilisateurBaseDonnees);
+    void setMotPasseBaseDonnees(QString const& motPasseBaseDonnee);
+    void setNomBaseDonnees(QString const& nomBaseDonnees);
+    void setPortTCP(int const& portTCP);
 
-        QFrame *fConnexion;
-        QVBoxLayout *layoutConnexion;
-        QGridLayout *layoutChamps;
-        QHBoxLayout *layoutBoutons;
-        QLabel *labelConnexion;
-        QLabel *labelUtilisateur;
-        QLabel *labelMotPasse;
-        QLineEdit *lineUtilisateur;
-        QLineEdit *lineMotPasse;
-        QPushButton *bConnexion;
-        QPushButton *bAnnuler;
+    ~FenParametres();
 
-        QFrame *fParametres;
-        QVBoxLayout *layoutParametres;
-        QGridLayout *layoutChampsParam;
-        QHBoxLayout *layoutBoutonsParam;
-        QLabel *labelParametres;
-        QLabel *labelIPSQL;
-        QLabel *labelIPRaspberry;
-        QLabel *labelIPAccueil;
-        QLabel *labelPortServeur;
-        QLabel *labelUtilisateurSQL;
-        QLabel *labelMotPasseSQL;
-        QLabel *labelNomBDD;
-        QLineEdit *lineIPSQL;
-        QLineEdit *lineIPRaspberry;
-        QLineEdit *lineIPAccueil;
-        QLineEdit *linePortServeur;
-        QLineEdit *lineUtilisateurSQL;
-        QLineEdit *lineMotPasseSQL;
-        QLineEdit *lineNomBDD;
-        QPushButton *bOK;
+public slots:
+    void connexion();
+
+private:
+    QVBoxLayout *layoutParametres;
+    QHBoxLayout *layoutBoutons;
+
+    QFormLayout *layoutBaseDonnees;
+    QFormLayout *layoutCommunicationRPi;
+
+    QGroupBox *gbBaseDonnees;
+    QGroupBox *gbCommunicationRPi;
+
+    QLineEdit *lineIPAccueil;
+    QLineEdit *lineIPRPi;
+    QLineEdit *lineIPBaseDonnees;
+    QLineEdit *lineUtilisateurBaseDonnees;
+    QLineEdit *lineMotPasseBaseDonnees;
+    QLineEdit *lineNomBaseDonnees;
+
+    QSpinBox *spinPortTCP;
+
+    QPushButton *bValider;
+    QPushButton *bAnnuler;
+
 };
 
 

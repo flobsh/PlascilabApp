@@ -9,10 +9,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     FenPrincipale fenetre;
-    fenetre.resize(1200,900);
-
-    FenAjouterAdherent aA;
-    aA.show();
+    fenetre.resize(1600,900);
 
     fenetre.show();
 

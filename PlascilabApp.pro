@@ -44,3 +44,6 @@ HEADERS += \
     serveur.h
 
 FORMS +=
+
+DISTFILES += \
+    configuration.json

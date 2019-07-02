@@ -9,13 +9,12 @@ FenCrediterAdherent::FenCrediterAdherent(QWidget *parent) : FenAdherent(parent) 
 
     this->setWindowTitle("Créditer adhérent");
 
-    // Suppression des éléments d'édition d'adhérent
+    // Mise en place du layout
 
-    layoutFormulaire->removeWidget(lineID);
-    layoutFormulaire->removeWidget(lineNom);
-    layoutFormulaire->removeWidget(linePrenom);
-    layoutFormulaire->removeWidget(lineMail);
-    layoutFormulaire->removeWidget(lineTel);
+    layoutFormulaire->addRow("Type d'abonnement : ", comboTypeAbn);
+    layoutFormulaire->addRow("Nombre d'abonnements : ", spinNbAbn);
+    layoutFormulaire->addRow("Début abonnement : ", dateDebutAbn);
+    layoutFormulaire->addRow("Fin abonnement : ", dateFinAbn);
 
     // Boutons
 

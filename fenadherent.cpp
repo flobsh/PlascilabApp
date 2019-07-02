@@ -34,16 +34,6 @@ FenAdherent::FenAdherent(QWidget *parent) : QDialog(parent) {
     comboTypeAbn->addItem("Année");
     comboTypeAbn->addItem("Autre");
 
-    layoutFormulaire->addRow("ID : ", lineID);
-    layoutFormulaire->addRow("Nom : ", lineNom);
-    layoutFormulaire->addRow("Prénom : ", linePrenom);
-    layoutFormulaire->addRow("Mail : ", lineMail);
-    layoutFormulaire->addRow("N° Téléphone : ", lineTel);
-    layoutFormulaire->addRow("Type d'abonnement : ", comboTypeAbn);
-    layoutFormulaire->addRow("Nombre d'abonnements : ", spinNbAbn);
-    layoutFormulaire->addRow("Début abonnement : ", dateDebutAbn);
-    layoutFormulaire->addRow("Fin abonnement : ", dateFinAbn);
-
     // Boutons
 
     layoutBoutons = new QHBoxLayout();
@@ -67,6 +57,8 @@ FenAdherent::FenAdherent(QWidget *parent) : QDialog(parent) {
     connect(spinNbAbn, SIGNAL(valueChanged(int)), this, SLOT(changementAbonnement()));
     connect(dateDebutAbn, SIGNAL(dateChanged(QDate)), this, SLOT(changementDateDebut()));
     connect(dateFinAbn, SIGNAL(dateChanged(QDate)), this, SLOT(changementDateFin()));
+    connect(bAnnuler, SIGNAL(released()), this, SLOT(reject()));
+    connect(bOK, SIGNAL(released()), this, SLOT(accept()));
 }
 
 void FenAdherent::changementAbonnement() {
@@ -89,6 +81,9 @@ void FenAdherent::changementAbonnement() {
         }
         else if(comboTypeAbn->currentIndex() == 3) {
             spinNbAbn->setEnabled(false);
+            spinNbAbn->setValue(1);
+            dateDebutAbn->setDate(QDate::currentDate());
+            dateFinAbn->setDate(QDate::currentDate());
         }
     }
 

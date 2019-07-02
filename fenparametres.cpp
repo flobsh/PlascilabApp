@@ -4,118 +4,112 @@
 FenParametres::FenParametres(QWidget *parent) : QDialog(parent) {
     setWindowTitle("Plascilab - Paramètres");
 
-    stackingLayout = new QStackedLayout();
+    layoutParametres = new QVBoxLayout;
 
-    // Page Connexion :
+    gbCommunicationRPi = new QGroupBox("Communication avec le Raspberry Pi");
+    gbBaseDonnees = new QGroupBox("Base de données");
 
-    fConnexion = new QFrame();
+    layoutCommunicationRPi = new QFormLayout();
+    layoutBaseDonnees = new QFormLayout();
 
-    layoutConnexion = new QVBoxLayout();
-    layoutBoutons = new QHBoxLayout();
-    layoutChamps = new QGridLayout();
+    lineIPAccueil = new QLineEdit();
+    lineIPRPi = new QLineEdit();
+    lineIPBaseDonnees = new QLineEdit();
+    lineUtilisateurBaseDonnees = new QLineEdit();
+    lineMotPasseBaseDonnees = new QLineEdit();
+    lineNomBaseDonnees = new QLineEdit();
 
-    labelConnexion = new QLabel("<strong>Accès aux paramètres :</strong>");
-    labelUtilisateur = new QLabel("Utilisateur : ");
-    labelMotPasse = new QLabel("Mot de passe : ");
+    spinPortTCP = new QSpinBox();
+    spinPortTCP->setMaximum(64738);
 
-    lineUtilisateur = new QLineEdit();
-    lineMotPasse = new QLineEdit();
+    layoutCommunicationRPi->addRow("Adresse IP Accueil : ", lineIPAccueil);
+    layoutCommunicationRPi->addRow("Adresse IP Raspberry Pi : ", lineIPRPi);
+    layoutCommunicationRPi->addRow("Port TCP utilisé : ", spinPortTCP);
 
-    lineMotPasse->setEchoMode(QLineEdit::Password);
+    layoutBaseDonnees->addRow("Adresse IP bae de données : ", lineIPBaseDonnees);
+    layoutBaseDonnees->addRow("Nom de la base de données : ", lineNomBaseDonnees);
+    layoutBaseDonnees->addRow("Utilisateur base de donnée (lecture seule) : ", lineUtilisateurBaseDonnees);
+    layoutBaseDonnees->addRow("Mot de passe base de donnée (lecture seule) : ", lineMotPasseBaseDonnees);
 
-    bConnexion = new QPushButton("Connexion");
+    gbCommunicationRPi->setLayout(layoutCommunicationRPi);
+    gbBaseDonnees->setLayout(layoutBaseDonnees);
+
+    layoutParametres->addWidget(gbCommunicationRPi);
+    layoutParametres->addWidget(gbBaseDonnees);
+
+    bValider = new QPushButton("Valider");
     bAnnuler = new QPushButton("Annuler");
 
-    layoutChamps->addWidget(labelUtilisateur, 0, 0, 1, 1, Qt::AlignLeft);
-    layoutChamps->addWidget(labelMotPasse, 1, 0, 1, 1, Qt::AlignLeft);
-    layoutChamps->addWidget(lineUtilisateur, 0, 1);
-    layoutChamps->addWidget(lineMotPasse, 1, 1);
-
-    layoutBoutons->addWidget(bConnexion);
+    layoutBoutons = new QHBoxLayout();
+    layoutBoutons->addWidget(bValider);
     layoutBoutons->addWidget(bAnnuler);
 
-    layoutConnexion->addStretch();
-    layoutConnexion->addWidget(labelConnexion, 0, Qt::AlignLeft);
-    layoutConnexion->addLayout(layoutChamps);
-    layoutConnexion->addLayout(layoutBoutons);
-    layoutConnexion->addStretch();
+    layoutParametres->addLayout(layoutBoutons);
 
-    fConnexion->setLayout(layoutConnexion);
-
-    // Page Paramètres
-
-    fParametres = new QFrame();
-
-    layoutParametres = new QVBoxLayout();
-    layoutChampsParam = new QGridLayout();
-    layoutBoutonsParam = new QHBoxLayout();
-
-    labelParametres = new QLabel("<strong>Paramètres</strong>");
-    labelIPSQL = new QLabel("Adresse IP serveur SQL : ");
-    labelIPAccueil = new QLabel("Adresse IP PC Accueil : ");
-    labelIPRaspberry = new QLabel("Adresse IP Raspberry : ");
-    labelPortServeur = new QLabel("Port de communication Raspberry : ");
-    labelUtilisateurSQL = new QLabel("Utilisateur base de données : ");
-    labelMotPasseSQL = new QLabel("Mot de passe base de données : ");
-    labelNomBDD = new QLabel("Base de données : ");
-
-    lineIPSQL = new QLineEdit();
-    lineIPAccueil = new QLineEdit();
-    lineIPRaspberry = new QLineEdit();
-    linePortServeur = new QLineEdit();
-    lineUtilisateurSQL = new QLineEdit();
-    lineMotPasseSQL = new QLineEdit();
-    lineNomBDD = new QLineEdit();
-
-    lineIPSQL->setInputMask("000.000.000.000;0");
-    lineIPAccueil->setInputMask("000.000.000.000;0");
-    lineIPRaspberry->setInputMask("000.000.000.000;0");
-    lineMotPasseSQL->setEchoMode(QLineEdit::Password);
-
-    layoutChampsParam->addWidget(labelIPAccueil, 0, 0);
-    layoutChampsParam->addWidget(labelIPRaspberry, 1, 0);
-    layoutChampsParam->addWidget(labelIPSQL, 2, 0);
-    layoutChampsParam->addWidget(labelNomBDD, 3, 0);
-    layoutChampsParam->addWidget(labelUtilisateurSQL, 4, 0);
-    layoutChampsParam->addWidget(labelMotPasseSQL, 5, 0);
-
-    layoutChampsParam->addWidget(lineIPAccueil, 0, 1);
-    layoutChampsParam->addWidget(lineIPRaspberry, 1, 1);
-    layoutChampsParam->addWidget(lineIPSQL, 2, 1);
-    layoutChampsParam->addWidget(lineNomBDD, 3, 1);
-    layoutChampsParam->addWidget(lineUtilisateurSQL, 4, 1);
-    layoutChampsParam->addWidget(lineMotPasseSQL, 5, 1);
-
-    bOK = new QPushButton("OK");
-
-    layoutBoutonsParam = new QHBoxLayout();
-    layoutBoutonsParam->addWidget(bOK);
-
-    layoutParametres = new QVBoxLayout();
-    layoutParametres->addWidget(labelParametres);
-    layoutParametres->addLayout(layoutChampsParam);
-    layoutParametres->addLayout(layoutBoutonsParam);
-
-    fParametres->setLayout(layoutParametres);
-
-    stackingLayout->addWidget(fConnexion);
-    stackingLayout->addWidget(fParametres);
-    stackingLayout->setCurrentIndex(0);
-
-    this->setLayout(stackingLayout);
+    this->setLayout(layoutParametres);
 
     connect(bAnnuler, SIGNAL(released()), this, SLOT(reject()));
-    connect(bConnexion, SIGNAL(released()), this, SLOT(connexion()));
+    connect(bValider, SIGNAL(released()), this, SLOT(accept()));
+}
+
+QString FenParametres::getIPAccueil() const {
+    return lineIPAccueil->text();
+}
+
+QString FenParametres::getIPRPi() const {
+    return lineIPRPi->text();
+}
+
+QString FenParametres::getIPBaseDonnes() const {
+    return lineIPBaseDonnees->text();
+}
+
+QString FenParametres::getUtilisateurBaseDonnees() const {
+    return lineUtilisateurBaseDonnees->text();
+}
+
+QString FenParametres::getMotPasseBaseDonnees() const {
+    return lineMotPasseBaseDonnees->text();
+}
+
+QString FenParametres::getNomBaseDonnees() const {
+    return lineNomBaseDonnees->text();
+}
+
+int FenParametres::getPortTCP() const {
+    return spinPortTCP->value();
+}
+
+void FenParametres::setIPAccueil(const QString &ipAccueil) {
+    lineIPAccueil->setText(ipAccueil);
+}
+
+void FenParametres::setIPRPi(const QString &ipRPi) {
+    lineIPRPi->setText(ipRPi);
+}
+
+void FenParametres::setIPBaseDonnes(const QString &ipBaseDonnees) {
+    lineIPBaseDonnees->setText(ipBaseDonnees);
+}
+
+void FenParametres::setUtilisateurBaseDonnees(const QString &utilisateurBaseDonnnees) {
+    lineUtilisateurBaseDonnees->setText(utilisateurBaseDonnnees);
+}
+
+void FenParametres::setMotPasseBaseDonnees(const QString &motPasseBaseDonnees) {
+    lineMotPasseBaseDonnees->setText(motPasseBaseDonnees);
+}
+
+void FenParametres::setNomBaseDonnees(const QString &nomBaseDonnees) {
+    lineNomBaseDonnees->setText(nomBaseDonnees);
+}
+
+void FenParametres::setPortTCP(const int &portTCP) {
+    spinPortTCP->setValue(portTCP);
 }
 
 void FenParametres::connexion() {
-    if(lineUtilisateur->text() != "root" || lineMotPasse->text() != "root") {
-        labelConnexion->setText("Nom d'utilisateur ou mot de passe incorrect");
-    }
-    else {
-        stackingLayout->setCurrentIndex(1);
-        layoutBoutonsParam->addWidget(bAnnuler);
-    }
+
 }
 
 FenParametres::~FenParametres() {

@@ -11,10 +11,10 @@ FenEditerAdherent::FenEditerAdherent(QWidget *parent) : FenAdherent(parent) {
 
     // Suppression des éléments d'abonnement
 
-    layoutFormulaire->removeWidget(comboTypeAbn);
-    layoutFormulaire->removeWidget(spinNbAbn);
-    layoutFormulaire->removeWidget(dateDebutAbn);
-    layoutFormulaire->removeWidget(dateFinAbn);
+    layoutFormulaire->addRow("Nom : ", lineNom);
+    layoutFormulaire->addRow("Prénom : ", linePrenom);
+    layoutFormulaire->addRow("Mail : ", lineMail);
+    layoutFormulaire->addRow("N° Téléphone : ", lineTel);
 
     // Boutons
 
