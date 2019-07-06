@@ -42,12 +42,131 @@ public slots:
     void crediterAdherent();
     void supprimerAdherent();
     void rechercherAdherent();
-    void activationBoutonsEdition();
+    void activationBoutonsEdition(QModelIndex const& indexModele);
     void desactivationBoutonsEdition();
     void changementSelectionVueTableSQL();
     void eteindreRaspberry();
 
 private:
+
+    //--------------------------//
+    // Onglet Horaires RER      //
+    //--------------------------//
+
+    QWebView *pageWeb;
+
+    //--------------------------//
+    // Onglet Administration    //
+    //--------------------------//
+
+    // Layout principal
+
+    QFrame *fAdministration;
+        QHBoxLayout *layoutAdministration;
+
+    // Table de vue SQL
+
+    QVBoxLayout *layoutVuesTables;
+
+        QTableView *vueTableAdherents;
+            QSqlQueryModel *modeleAdherents;
+
+        QTableView *vueTableBeneficiaires;
+            QSqlQueryModel *modeleBeneficiaires;
+
+    // Détails et bénéficiaires
+
+    QHBoxLayout *layoutDetailsBeneficiaires;
+
+        QGroupBox *gbDetails;
+            QGridLayout *layoutDetails;
+                QHBoxLayout *layoutIDs;
+                    QLabel *labelNumAdherent;
+                    QLabel *affAdherent;
+                    QLabel *labelIDCarte;
+                    QLabel *affIDCarte;
+
+                QLabel *labelDetailsNom, *affDetailsNom;
+                QLabel *labelDetailsPrenom, *affDetailsPrenom;
+                QLabel *labelDetailsDesignation, *affDetailsDesignation;
+                QLabel *labelDetailsAdresse, *affDetailsAdresse;
+                QLabel *labelDetailsCP, *affDetailsCP;
+                QLabel *labelDetailsVille, *affDetailsVille;
+                QLabel *labelDetailsMail, *affDetailsMail;
+                QLabel *labelDetailsTel, *affDetailsTel;
+                QLabel *labelDetailsTypeAdhesion, *affDetailsTypeAdhesion;
+                QLabel *labelDetailsAbonnement, *affDetailsAbonnement;
+                QLabel *labelDetailsDateDebut, *affDetailsDateDebut;
+                QLabel *labelDetailsDateDebut, *affDetailsMail;
+
+
+    // Colonne de boutons
+
+    QVBoxLayout *layoutBoutonsAdministration;
+
+        QGroupBox *gbConnexion;
+            QVBoxLayout *layoutGBConnexion;
+                QPushButton *bConnexion;
+                QPushButton *bParametres;
+
+        QGroupBox *gbRecherche;
+            QHBoxLayout *layoutGBRecherche;
+                QPushButton *bRecherche;
+                QLineEdit *lineRecherche;
+
+        QGroupBox *gbAdministration;
+            QVBoxLayout *layoutGBAdministration;
+                QPushButton *bListeAdherents;
+                QPushButton *bAdherentsNonAJour;
+                QPushButton *bAjouterAdherent;
+                QPushButton *bCrediterAdherent;
+                QPushButton *bEditerAdherent;
+                QPushButton *bSupprimerAdherent;
+
+    // Affichage de l'état des serveurs
+
+    QHBoxLayout *layoutServeurs;
+        QGridLayout *layoutAffichageServeurs;
+            QLabel *labelCommunicationServeur;
+            QLabel *labelCommunicationSQL;
+            QLabel *affCommunicationServeur;
+            QLabel *affCommunicationSQL;
+
+        QVBoxLayout *layoutBoutonsServeurs;
+            QPushButton *bRafraichirServeur;
+            QPushButton *bRafraichirSQL;
+
+    //--------------------------//
+    // Onglet Passages          //
+    //--------------------------//
+
+    QTableView *vueJournal;
+
+    //--------------------------//
+    // Structure principale     //
+    //--------------------------//
+
+    QGridLayout *layoutPrincipal;
+        QTabWidget *barreOnglets;
+
+        QFrame *fAfficheurBadge;
+            QGridLayout *layoutAfficheurBadge;
+                QLabel *photoAdherent;
+                QLabel *labelID;
+                QLabel *labelNom;
+                QLabel *labelPrenom;
+                QLabel *labelDebutAbn;
+                QLabel *labelFinAbn;
+                QLabel *affBadgeID;
+                QLabel *affBadgeNom;
+                QLabel *affBadgePrenom;
+                QLabel *affBadgeDebutAbn;
+                QLabel *affBadgeFinAbn;
+
+    //--------------------------//
+    // Données                  //
+    //--------------------------//
+
     QString ipAccueil;
     QString ipBaseDonnees;
     QString ipRaspberry;
@@ -55,59 +174,15 @@ private:
     QString nomUtilisateurLectureBDD;
     QString motPasseLectureBDD;
     int portServeur;
-    QGridLayout *layoutPrincipal;
-    QVBoxLayout *layoutAdministration;
-    QGridLayout *layoutAfficheurBadge;
-    QVBoxLayout *layoutGBConnexion;
-    QVBoxLayout *layoutGBAdministration;
-    QHBoxLayout *layoutGBRecherche;
-    QGroupBox *gbConnexion;
-    QGroupBox *gbRecherche;
-    QGroupBox *gbAdministration;
-    QTabWidget *barreOnglets;
-    QWebView *pageWeb;
-    QTableView *vueTableSQL;
-    QTableView *vueJournal;
-    QPushButton *bConnexion;
-    QPushButton *bListeAdherents;
-    QPushButton *bAdherentsNonAJour;
-    QPushButton *bAjouterAdherent;
-    QPushButton *bCrediterAdherent;
-    QPushButton *bEditerAdherent;
-    QPushButton *bSupprimerAdherent;
-    QPushButton *bParametres;
-    QPushButton *bRecherche;
-    QLineEdit *lineRecherche;
-    QFrame *fAdministration;
-    QVBoxLayout *layoutBoutonsAdministration;
-    QVBoxLayout *layoutBoutonsServeurs;
-    QHBoxLayout *layoutServeurs;
-    QHBoxLayout *layoutEditeur;
-    QGridLayout *layoutAffichageServeurs;
-    QLabel *labelCommunicationServeur;
-    QLabel *labelCommunicationSQL;
-    QLabel *affCommunicationServeur;
-    QLabel *affCommunicationSQL;
-    QFrame *fAfficheurBadge;
-    QLabel *photoAdherent;
-    QLabel *labelID;
-    QLabel *labelNom;
-    QLabel *labelPrenom;
-    QLabel *labelDebutAbn;
-    QLabel *labelFinAbn;
-    QLabel *affBadgeID;
-    QLabel *affBadgeNom;
-    QLabel *affBadgePrenom;
-    QLabel *affBadgeDebutAbn;
-    QLabel *affBadgeFinAbn;
-    QPushButton *bRafraichirServeur;
-    QPushButton *bRafraichirSQL;
+
+    //------------------------------//
+    // Serveur et bases de données  //
+    //------------------------------//
 
     Serveur *serveur;
 
     QSqlDatabase *baseDonnees;
     QSqlDatabase *baseAdmin;
-    QSqlQueryModel *modeleSQL;
 };
 
 #endif // FENPRINCIPALE_H

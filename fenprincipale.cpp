@@ -13,88 +13,103 @@
 #include <QSqlField>
 #include <QFile>
 #include <QTcpSocket>
+#include <QSignalSpy>
 
 FenPrincipale::FenPrincipale() {
     layoutPrincipal = new QGridLayout(this);
 
     barreOnglets = new QTabWidget();
 
-    // Page 1 : Horaires RER
+    //--------------------------//
+    // Onglet Horaires RER      //
+    //--------------------------//
 
     pageWeb = new QWebView();
     pageWeb->load(QUrl("http://monrer.fr/?s=RIS"));
 
-    // Page 2 : Outils Administratifs
+    //--------------------------//
+    // Onglet Administration    //
+    //--------------------------//
 
-    fAdministration = new QFrame();
-    layoutAdministration = new QVBoxLayout();
+    // Tables de vues SQL
 
-        // Administration de la BDD
+    vueTableAdherents = new QTableView();
+    vueTableBeneficiaires = new QTableView();
 
-    layoutEditeur = new QHBoxLayout();
-    layoutBoutonsAdministration = new QVBoxLayout();
+    modeleAdherents = new QSqlQueryModel();
+    modeleBeneficiaires = new QSqlQueryModel();
 
-    gbConnexion = new QGroupBox("Connexion");
-    gbAdministration = new QGroupBox("Administration");
-    gbRecherche = new QGroupBox("Recherche");
+    layoutVuesTables = new QVBoxLayout();
+    layoutVuesTables->addWidget(vueTableAdherents);
+    layoutVuesTables->addWidget(vueTableBeneficiaires);
+    layoutVuesTables->setStretch(0,3);
+    layoutVuesTables->setStretch(1,1);
 
-    vueTableSQL = new QTableView();
+    // Colonne de boutons
 
-    bConnexion = new QPushButton("Connexion");
-    bRecherche = new QPushButton("Go");
-    bListeAdherents = new QPushButton("Rafraîchir la liste");
-    bAdherentsNonAJour = new QPushButton("Adhérents non à jours");
-    bAjouterAdherent = new QPushButton("Ajouter adhérent");
-    bCrediterAdherent = new QPushButton("Créditer adhérent");
-    bEditerAdherent = new QPushButton("Editer adhérent");
-    bSupprimerAdherent = new QPushButton("Supprimer adhérent");
-    bParametres = new QPushButton("Paramètres");
-    lineRecherche = new QLineEdit();
+        // Boutons de connexion
 
-    lineRecherche->setEnabled(false);
-    bRecherche->setEnabled(false);
-    bListeAdherents->setEnabled(false);
-    bAdherentsNonAJour->setEnabled(false);
-    bAjouterAdherent->setEnabled(false);
-    bCrediterAdherent->setEnabled(false);
-    bEditerAdherent->setEnabled(false);
-    bSupprimerAdherent->setEnabled(false);
+        bConnexion = new QPushButton("Connexion");
+        bParametres = new QPushButton("Paramètres");
 
-    layoutGBConnexion = new QVBoxLayout();
-    layoutGBConnexion->addWidget(bConnexion);
-    layoutGBConnexion->addWidget(bParametres);
+        layoutGBConnexion = new QVBoxLayout();
+        layoutGBConnexion->addWidget(bConnexion);
+        layoutGBConnexion->addWidget(bParametres);
 
-    layoutGBRecherche = new QHBoxLayout();
-    layoutGBRecherche->addWidget(lineRecherche);
-    layoutGBRecherche->addWidget(bRecherche);
+        gbConnexion = new QGroupBox("Connexion");
+        gbConnexion->setLayout(layoutGBConnexion);
 
-    layoutGBAdministration = new QVBoxLayout();
-    layoutGBAdministration->addWidget(bListeAdherents);
-    layoutGBAdministration->addWidget(bAdherentsNonAJour);
-    layoutGBAdministration->addWidget(bAjouterAdherent);
-    layoutGBAdministration->addWidget(bCrediterAdherent);
-    layoutGBAdministration->addWidget(bEditerAdherent);
-    layoutGBAdministration->addWidget(bSupprimerAdherent);
+        // Boutons de recherche
 
-    gbConnexion->setLayout(layoutGBConnexion);
-    gbRecherche->setLayout(layoutGBRecherche);
-    gbAdministration->setLayout(layoutGBAdministration);
+        bRecherche = new QPushButton("Go");
+        bRecherche->setEnabled(false);
 
-    layoutBoutonsAdministration->addWidget(gbConnexion);
-    layoutBoutonsAdministration->addWidget(gbRecherche);
-    layoutBoutonsAdministration->addWidget(gbAdministration);
-    layoutBoutonsAdministration->setStretch(2,1);
+        lineRecherche = new QLineEdit();
+        lineRecherche->setEnabled(false);
 
-    layoutEditeur->addWidget(vueTableSQL);
-    layoutEditeur->addLayout(layoutBoutonsAdministration);
-    layoutEditeur->setStretch(0,1);
+        layoutGBRecherche = new QHBoxLayout();
+        layoutGBRecherche->addWidget(lineRecherche);
+        layoutGBRecherche->addWidget(bRecherche);
 
-        // Affichage de l'état des serveurs
+        gbRecherche = new QGroupBox("Recherche");
+        gbRecherche->setLayout(layoutGBRecherche);
 
-    layoutServeurs = new QHBoxLayout();
-    layoutBoutonsServeurs = new QVBoxLayout();
+        // Boutons d'administration
 
-    layoutAffichageServeurs = new QGridLayout();
+        bListeAdherents = new QPushButton("Rafraîchir la liste");
+        bAdherentsNonAJour = new QPushButton("Adhérents non à jours");
+        bAjouterAdherent = new QPushButton("Ajouter adhérent");
+        bCrediterAdherent = new QPushButton("Créditer adhérent");
+        bEditerAdherent = new QPushButton("Editer adhérent");
+        bSupprimerAdherent = new QPushButton("Supprimer adhérent");
+
+        bListeAdherents->setEnabled(false);
+        bAdherentsNonAJour->setEnabled(false);
+        bAjouterAdherent->setEnabled(false);
+        bCrediterAdherent->setEnabled(false);
+        bEditerAdherent->setEnabled(false);
+        bSupprimerAdherent->setEnabled(false);
+
+        layoutGBAdministration = new QVBoxLayout();
+        layoutGBAdministration->addWidget(bListeAdherents);
+        layoutGBAdministration->addWidget(bAdherentsNonAJour);
+        layoutGBAdministration->addWidget(bAjouterAdherent);
+        layoutGBAdministration->addWidget(bCrediterAdherent);
+        layoutGBAdministration->addWidget(bEditerAdherent);
+        layoutGBAdministration->addWidget(bSupprimerAdherent);
+
+        gbAdministration = new QGroupBox("Administration");
+        gbAdministration->setLayout(layoutGBAdministration);
+
+        // Layout principal des boutons d'administration
+
+        layoutBoutonsAdministration = new QVBoxLayout();
+        layoutBoutonsAdministration->addWidget(gbConnexion);
+        layoutBoutonsAdministration->addWidget(gbRecherche);
+        layoutBoutonsAdministration->addWidget(gbAdministration);
+        layoutBoutonsAdministration->setStretch(2,1);
+
+    // Affichage de l'état des serveurs
 
     labelCommunicationServeur = new QLabel("Communication RaspberryPI : ");
     labelCommunicationSQL = new QLabel("Communication base de données : ");
@@ -102,28 +117,40 @@ FenPrincipale::FenPrincipale() {
     affCommunicationServeur = new QLabel();
     affCommunicationSQL = new QLabel();
 
-    bRafraichirServeur = new QPushButton("Eteindre");
-    bRafraichirSQL = new QPushButton("Rafraichir");
-
     affCommunicationServeur->setAlignment(Qt::AlignLeft);
     affCommunicationSQL->setAlignment(Qt::AlignLeft);
 
+    layoutAffichageServeurs = new QGridLayout();
     layoutAffichageServeurs->addWidget(labelCommunicationServeur, 0, 0);
     layoutAffichageServeurs->addWidget(labelCommunicationSQL,1,0);
     layoutAffichageServeurs->addWidget(affCommunicationServeur, 0, 1);
     layoutAffichageServeurs->addWidget(affCommunicationSQL, 1, 1);
     layoutAffichageServeurs->setColumnStretch(2,1);
 
+    bRafraichirServeur = new QPushButton("Eteindre");
+    bRafraichirSQL = new QPushButton("Rafraichir");
+
+    layoutBoutonsServeurs = new QVBoxLayout();
     layoutBoutonsServeurs->addWidget(bRafraichirServeur);
     layoutBoutonsServeurs->addWidget(bRafraichirSQL);
 
+    layoutServeurs = new QHBoxLayout();
     layoutServeurs->addLayout(layoutAffichageServeurs);
     layoutServeurs->addLayout(layoutBoutonsServeurs);
     layoutServeurs->setStretch(0,1);
 
+    // Layout principal de l'onglet d'administration
+
+    layoutEditeur = new QHBoxLayout();
+    layoutEditeur->addLayout(layoutVuesTables);
+    layoutEditeur->addLayout(layoutBoutonsAdministration);
+    layoutEditeur->setStretch(0,1);
+
+    layoutAdministration = new QVBoxLayout();
     layoutAdministration->addLayout(layoutEditeur);
     layoutAdministration->addLayout(layoutServeurs);
 
+    fAdministration = new QFrame();
     fAdministration->setLayout(layoutAdministration);
 
     // Page 3 : Historique des passages
@@ -182,7 +209,7 @@ FenPrincipale::FenPrincipale() {
     connect(bEditerAdherent, SIGNAL(released()), this, SLOT(editerAdherent()));
     connect(bSupprimerAdherent, SIGNAL(released()), this, SLOT(supprimerAdherent()));
     connect(bParametres, SIGNAL(released()), this, SLOT(affFenParametres()));
-    connect(vueTableSQL, SIGNAL(clicked(QModelIndex)), this, SLOT(activationBoutonsEdition()));
+    connect(vueTableAdherents, SIGNAL(clicked(QModelIndex)), this, SLOT(activationBoutonsEdition(QModelIndex)));
     connect(bRafraichirServeur, SIGNAL(released()), this, SLOT(eteindreRaspberry()));
 
     // Lecture du fichier de configuration
@@ -225,10 +252,6 @@ FenPrincipale::FenPrincipale() {
     *baseAdmin = QSqlDatabase::addDatabase("QMYSQL", "Admin");
     baseAdmin->setHostName(ipBaseDonnees);
     baseAdmin->setDatabaseName(nomBaseDonnees);
-
-    // Modele SQL
-
-    modeleSQL = new QSqlQueryModel;
 }
 
 void FenPrincipale::affMessageServeur(const QString &message) {
@@ -308,24 +331,24 @@ void FenPrincipale::adherentsNonAJour() {
     requete.exec();
     requete.last();
 
-    modeleSQL->setQuery(requete);
+    modeleAdherents->setQuery(requete);
 
-    if(modeleSQL->lastError().isValid()) {
-        QMessageBox::critical(this, "Erreur", modeleSQL->lastError().text());
+    if(modeleAdherents->lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", modeleAdherents->lastError().text());
         return;
     }
-    modeleSQL->setHeaderData(0, Qt::Horizontal, "ID");
-    modeleSQL->setHeaderData(1, Qt::Horizontal, "Nom");
-    modeleSQL->setHeaderData(2, Qt::Horizontal, "Prenom");
-    modeleSQL->setHeaderData(3, Qt::Horizontal, "Mail");
-    modeleSQL->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
-    modeleSQL->setHeaderData(5, Qt::Horizontal, "Type abn");
-    modeleSQL->setHeaderData(6, Qt::Horizontal, "Nombre abn");
-    modeleSQL->setHeaderData(7, Qt::Horizontal, "Début abn");
-    modeleSQL->setHeaderData(8, Qt::Horizontal, "Fin abn");
+    modeleAdherents->setHeaderData(0, Qt::Horizontal, "ID");
+    modeleAdherents->setHeaderData(1, Qt::Horizontal, "Nom");
+    modeleAdherents->setHeaderData(2, Qt::Horizontal, "Prenom");
+    modeleAdherents->setHeaderData(3, Qt::Horizontal, "Mail");
+    modeleAdherents->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
+    modeleAdherents->setHeaderData(5, Qt::Horizontal, "Type abn");
+    modeleAdherents->setHeaderData(6, Qt::Horizontal, "Nombre abn");
+    modeleAdherents->setHeaderData(7, Qt::Horizontal, "Début abn");
+    modeleAdherents->setHeaderData(8, Qt::Horizontal, "Fin abn");
 
-    vueTableSQL->setModel(modeleSQL);
-    vueTableSQL->show();
+    vueTableAdherents->setModel(modeleAdherents);
+    vueTableAdherents->show();
 }
 
 void FenPrincipale::rechercherAdherent() {
@@ -335,42 +358,49 @@ void FenPrincipale::rechercherAdherent() {
     requete.exec();
     requete.last();
 
-    modeleSQL->setQuery(requete);
+    modeleAdherents->setQuery(requete);
 
-    if(modeleSQL->lastError().isValid()) {
-        QMessageBox::critical(this, "Erreur", modeleSQL->lastError().text());
+    if(modeleAdherents->lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", modeleAdherents->lastError().text());
         return;
     }
-    modeleSQL->setHeaderData(0, Qt::Horizontal, "ID");
-    modeleSQL->setHeaderData(1, Qt::Horizontal, "Nom");
-    modeleSQL->setHeaderData(2, Qt::Horizontal, "Prenom");
-    modeleSQL->setHeaderData(3, Qt::Horizontal, "Mail");
-    modeleSQL->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
-    modeleSQL->setHeaderData(5, Qt::Horizontal, "Type abn");
-    modeleSQL->setHeaderData(6, Qt::Horizontal, "Nombre abn");
-    modeleSQL->setHeaderData(7, Qt::Horizontal, "Début abn");
-    modeleSQL->setHeaderData(8, Qt::Horizontal, "Fin abn");
+    modeleAdherents->setHeaderData(0, Qt::Horizontal, "ID");
+    modeleAdherents->setHeaderData(1, Qt::Horizontal, "Nom");
+    modeleAdherents->setHeaderData(2, Qt::Horizontal, "Prenom");
+    modeleAdherents->setHeaderData(3, Qt::Horizontal, "Mail");
+    modeleAdherents->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
+    modeleAdherents->setHeaderData(5, Qt::Horizontal, "Type abn");
+    modeleAdherents->setHeaderData(6, Qt::Horizontal, "Nombre abn");
+    modeleAdherents->setHeaderData(7, Qt::Horizontal, "Début abn");
+    modeleAdherents->setHeaderData(8, Qt::Horizontal, "Fin abn");
 
-    vueTableSQL->setModel(modeleSQL);
-    vueTableSQL->show();
+    vueTableAdherents->setModel(modeleAdherents);
+    vueTableAdherents->show();
 }
 
 void FenPrincipale::listeAdherents() {
-    modeleSQL->setQuery("SELECT * from Abonnes", *baseAdmin);
-    if(modeleSQL->lastError().isValid()) {
-        QMessageBox::critical(this, "Erreur", modeleSQL->lastError().text());
+    modeleAdherents->setQuery("SELECT id, idCarte, typeAdhesion, nom, prenom, designation, adresse, cp, ville, tel, mail, dureeAbn, dateDebutAbn, dateFinAbn from Adherents", *baseAdmin);
+    if(modeleAdherents->lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", modeleAdherents->lastError().text());
         return;
     }
-    modeleSQL->setHeaderData(0, Qt::Horizontal, "ID");
-    modeleSQL->setHeaderData(1, Qt::Horizontal, "Nom");
-    modeleSQL->setHeaderData(2, Qt::Horizontal, "Prenom");
-    modeleSQL->setHeaderData(3, Qt::Horizontal, "Mail");
-    modeleSQL->setHeaderData(4, Qt::Horizontal, "N° Téléphone");
-    modeleSQL->setHeaderData(5, Qt::Horizontal, "Début abn");
-    modeleSQL->setHeaderData(6, Qt::Horizontal, "Fin abn");
+    modeleAdherents->setHeaderData(0, Qt::Horizontal, "N° Adhérent");
+    modeleAdherents->setHeaderData(1, Qt::Horizontal, "ID Carte");
+    modeleAdherents->setHeaderData(2, Qt::Horizontal, "Type d'adhésion");
+    modeleAdherents->setHeaderData(3, Qt::Horizontal, "Nom");
+    modeleAdherents->setHeaderData(4, Qt::Horizontal, "Prénom");
+    modeleAdherents->setHeaderData(5, Qt::Horizontal, "Désignation");
+    modeleAdherents->setHeaderData(6, Qt::Horizontal, "Adresse");
+    modeleAdherents->setHeaderData(7, Qt::Horizontal, "CP");
+    modeleAdherents->setHeaderData(8, Qt::Horizontal, "Ville");
+    modeleAdherents->setHeaderData(9, Qt::Horizontal, "Tel");
+    modeleAdherents->setHeaderData(10, Qt::Horizontal, "Mail");
+    modeleAdherents->setHeaderData(11, Qt::Horizontal, "Abonnement");
+    modeleAdherents->setHeaderData(12, Qt::Horizontal, "Début");
+    modeleAdherents->setHeaderData(13, Qt::Horizontal, "Fin");
 
-    vueTableSQL->setModel(modeleSQL);
-    vueTableSQL->show();
+    vueTableAdherents->setModel(modeleAdherents);
+    vueTableAdherents->show();
 }
 
 void FenPrincipale::ajouterAdherent() {
@@ -427,7 +457,7 @@ void FenPrincipale::editerAdherent() {
 
     QSqlQuery requete(*baseAdmin);
     requete.prepare("SELECT id, nom, prenom, mail, tel FROM Abonnes WHERE id = :_id");
-    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
+    requete.bindValue(":_id", vueTableAdherents->model()->index(vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
     requete.exec();
     requete.last();
 
@@ -453,7 +483,7 @@ void FenPrincipale::editerAdherent() {
     requete.bindValue(":_prenom", fenEditerAdherent.getPrenom());
     requete.bindValue(":_mail", fenEditerAdherent.getMail());
     requete.bindValue(":_tel", fenEditerAdherent.getTel());
-    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
+    requete.bindValue(":_id", vueTableAdherents->model()->index(vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
     requete.exec();
 
     listeAdherents();
@@ -478,7 +508,7 @@ void FenPrincipale::crediterAdherent() {
     requete.bindValue(":_nbAbn", fenCrediterAdherent.getNbAbn());
     requete.bindValue(":_dateDebutAbn", fenCrediterAdherent.getDateDebutAbn().toString("yyyy-MM-dd"));
     requete.bindValue(":_dateFinAbn", fenCrediterAdherent.getDateFinAbn().toString("yyyy-MM-dd"));
-    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
+    requete.bindValue(":_id", vueTableAdherents->model()->index(vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
 
     if(!requete.exec()) {
         QMessageBox::critical(this, "Erreur", "L'édition de la base de données a échoué.");
@@ -491,7 +521,7 @@ void FenPrincipale::crediterAdherent() {
 void FenPrincipale::supprimerAdherent() {
     QSqlQuery requete(*baseAdmin);
     requete.prepare("SELECT id, nom, prenom FROM Abonnes WHERE id = (:_id)");
-    requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
+    requete.bindValue(":_id", vueTableAdherents->model()->index(vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
     requete.exec();
     requete.last();
 
@@ -506,7 +536,7 @@ void FenPrincipale::supprimerAdherent() {
     }
     else {
         requete.prepare("DELETE FROM Abonnes WHERE id = :_id");
-        requete.bindValue(":_id", vueTableSQL->model()->index(vueTableSQL->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
+        requete.bindValue(":_id", vueTableAdherents->model()->index(vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString());
         requete.exec();
         return;
     }
@@ -518,7 +548,7 @@ void FenPrincipale::supprimerAdherent() {
 bool FenPrincipale::connexionBaseAdmin() {
     if(bConnexion->text() == "Déconnexion") {
         bConnexion->setText("Connexion");
-        vueTableSQL->setModel(nullptr);
+        vueTableAdherents->setModel(nullptr);
         baseAdmin->close();
         lineRecherche->setEnabled(false);
         bRecherche->setEnabled(false);
@@ -564,13 +594,15 @@ bool FenPrincipale::connexionBaseAdmin() {
 
 void FenPrincipale::eteindreRaspberry() {
     QTcpSocket client(this);
+    QSignalSpy signalConnexion(&client, SIGNAL(connected()));
 
     std::cout<< "Envoi.." + ipRaspberry.toStdString() << std::endl;
     client.abort();
-    client.connectToHost("10.10.0.190", 50854);
+    client.connectToHost("10.10.0.196", 50854);
+    signalConnexion.wait(5000);
     std::cout << client.state() << std::endl;
-    client.write(QByteArray("TERM"));
-    std::cout << client.state() << std::endl;
+    std::cout << client.write(QByteArray("TERM")) << std::endl;
+    client.waitForBytesWritten(5000);
     client.close();
     std::cout<< "Envoi terminé" << std::endl;
 }
@@ -651,10 +683,26 @@ void FenPrincipale::ecrireFichierConfiguration(QString nomFichier) {
     fichierConfiguration.close();
 }
 
-void FenPrincipale::activationBoutonsEdition() {
+void FenPrincipale::activationBoutonsEdition(QModelIndex const& indexModele) {
+
+    QSqlQuery requete(*baseAdmin);
+    requete.prepare("SELECT * from Beneficiaires WHERE id = :_id");
+    requete.bindValue(":_id", vueTableAdherents->model()->index(vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data());
+    requete.exec();
+    requete.last();
+
+    modeleBeneficiaires->setQuery(requete);
+
+    if(modeleBeneficiaires->lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", modeleBeneficiaires->lastError().text());
+        return;
+    }
+
     bEditerAdherent->setEnabled(true);
     bCrediterAdherent->setEnabled(true);
     bSupprimerAdherent->setEnabled(true);
+
+    vueTableBeneficiaires->setModel(modeleBeneficiaires);
 }
 
 void FenPrincipale::desactivationBoutonsEdition() {
@@ -664,7 +712,7 @@ void FenPrincipale::desactivationBoutonsEdition() {
 }
 
 void FenPrincipale::changementSelectionVueTableSQL() {
-    if(!vueTableSQL->selectionModel()->selectedIndexes().isEmpty() && vueTableSQL->selectionModel()->selectedIndexes().at(0).isValid()) {
+    if(!vueTableAdherents->selectionModel()->selectedIndexes().isEmpty() && vueTableAdherents->selectionModel()->selectedIndexes().at(0).isValid()) {
         bCrediterAdherent->setEnabled(true);
         bEditerAdherent->setEnabled(true);
         bSupprimerAdherent->setEnabled(true);

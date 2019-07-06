@@ -1,14 +1,14 @@
 #include <QCoreApplication>
 #include <QApplication>
 #include "serveur.h"
-#include "fenprincipale.h"
 #include "fenajouteradherent.h"
+#include "fenplascilabapp.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    FenPrincipale fenetre;
+    FenPlascilabApp fenetre;
     fenetre.resize(1600,900);
 
     fenetre.show();

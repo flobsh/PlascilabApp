@@ -1,7 +1,8 @@
 QT += widgets
-QT += webkitwidgets
+QT += webenginewidgets
 QT += network
 QT += sql
+QT += testlib
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -24,7 +25,7 @@ SOURCES += \
         fencrediteradherent.cpp \
         fenediteradherent.cpp \
         fenparametres.cpp \
-        fenprincipale.cpp \
+        fenplascilabapp.cpp \
         main.cpp \
         serveur.cpp
 
@@ -40,10 +41,11 @@ HEADERS += \
     fencrediteradherent.h \
     fenediteradherent.h \
     fenparametres.h \
-    fenprincipale.h \
+    fenplascilabapp.h \
     serveur.h
 
-FORMS +=
+FORMS += \
+    fenplascilabapp.ui
 
 DISTFILES += \
     configuration.json
