@@ -451,10 +451,6 @@ void FenPlascilabApp::ajouterAdherent() {
     requeteAjout.bindValue(":_dateDebutAbn", fenAjouterAdherent.getDateDebutAbn());
     requeteAjout.bindValue(":_dateFinAbn", fenAjouterAdherent.getDateFinAbn());
 
-    if(!baseAdminAccessible()) {
-        return;
-    }
-
     requeteAjout.exec();
     requeteAjout.last();
 
