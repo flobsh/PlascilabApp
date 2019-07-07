@@ -45,7 +45,7 @@ FenPlascilabApp::FenPlascilabApp(QWidget *parent) : QWidget(parent), ui(new Ui::
     motPasseLectureBDD = "";
     portServeur = 50855;
 
-    lireFichierConfiguration("/home/florianb/Documents/Stage Planète Sciences - Eté 2019/PlascilabApp/configuration.json");
+    lireFichierConfiguration("configuration.json");
 
     //--------------------------------------//
     // Modèles pour les bases de données    //
@@ -68,16 +68,20 @@ FenPlascilabApp::FenPlascilabApp(QWidget *parent) : QWidget(parent), ui(new Ui::
     //------------------------------//
 
     baseDonnees = new QSqlDatabase();
-    *baseDonnees = QSqlDatabase::addDatabase("QMYSQL");
+    *baseDonnees = QSqlDatabase::addDatabase("QODBC");
     baseDonnees->setHostName(ipBaseDonnees);
     baseDonnees->setUserName(nomUtilisateurLectureBDD);
     baseDonnees->setPassword(motPasseLectureBDD);
-    baseDonnees->setDatabaseName(nomBaseDonnees);
+    baseDonnees->setDatabaseName("Driver={MySQL ODBC 8.0 Unicode Driver};"
+                                 "Server=" + ipBaseDonnees + ";" +
+                                 "Database=" + nomBaseDonnees + ";" +
+                                 "Uid=" + nomUtilisateurLectureBDD + ";" +
+                                 "Pwd=" + motPasseLectureBDD + ";");
     if (baseDonnees->open()) {
         affMessageSQL("Connecté sur " + baseDonnees->hostName() + " en tant que " + baseDonnees->userName());
     }
     else {
-        affMessageSQL("La connexion sur " + baseDonnees->hostName() + " en tant que " + baseDonnees->userName() + " a échoué.");
+        affMessageSQL("La connexion sur " + baseDonnees->hostName() + " en tant que " + baseDonnees->userName() + " a échoué : " + baseDonnees->lastError().text());
     }
 
     //-------------------------------------//
@@ -85,7 +89,7 @@ FenPlascilabApp::FenPlascilabApp(QWidget *parent) : QWidget(parent), ui(new Ui::
     //-------------------------------------//
 
     baseAdmin = new QSqlDatabase();
-    *baseAdmin = QSqlDatabase::addDatabase("QMYSQL", "Admin");
+    *baseAdmin = QSqlDatabase::addDatabase("QODBC", "Admin");
     baseAdmin->setHostName(ipBaseDonnees);
     baseAdmin->setDatabaseName(nomBaseDonnees);
 
@@ -258,6 +262,11 @@ bool FenPlascilabApp::connexionBaseAdmin() {
 
     baseAdmin->setUserName(fenConnexion->getUtilisateur());
     baseAdmin->setPassword(fenConnexion->getMotPasse());
+    baseAdmin->setDatabaseName("Driver={MySQL ODBC 8.0 Unicode Driver};"
+                               "Database=" + nomBaseDonnees + ";"
+                               "Server=" + ipBaseDonnees + ";"
+                               "Uid=" + fenConnexion->getUtilisateur() + ";"
+                               "Pwd=" + fenConnexion->getMotPasse() + ";");
 
     delete fenConnexion;
 
