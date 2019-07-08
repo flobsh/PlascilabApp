@@ -1,9 +1,9 @@
 {
     "ipAccueil": "0.0.0.0",
-    "ipBaseDonnees": "remotemysql.com",
+    "ipBaseDonnees": "192.168.30.253",
     "ipRaspberry": "10.10.0.190",
-    "motPasseLectureBDD": "FtvPmtzse8",
-    "nomBaseDonnees": "g6LFW4XMSy",
-    "nomUtilisateurLectureBDD": "g6LFW4XMSy",
+    "motPasseLectureBDD": "projectrf",
+    "nomBaseDonnees": "projectrf",
+    "nomUtilisateurLectureBDD": "projectrf",
     "portServeur": 50855
 }
