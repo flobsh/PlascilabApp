@@ -54,6 +54,7 @@ private slots:
     void changementAbonnement();
     void changementDateDebut();
     void changementDateFin();
+    void accepter();
 
 private:
     QVBoxLayout *layoutPrincipal;

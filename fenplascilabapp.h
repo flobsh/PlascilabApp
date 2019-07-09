@@ -33,10 +33,13 @@ public slots:
     void receptionIDCarte(QString const& donnees);
     void affDetails();
     void cacherDetails();
+    void rechercherAdherent();
     void ajouterAdherent();
     void editerAdherent();
     void crediterAdherent();
     void supprimerAdherent();
+    void ajouterBeneficiaire();
+    void supprimerBeneficiaire();
     void eteindreRaspberry();
     int getIDAdherentSelectionne() const;
     bool idAdherentSelectionneIsValid() const;

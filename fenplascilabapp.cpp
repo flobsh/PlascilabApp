@@ -4,6 +4,7 @@
 #include "fenajouteradherent.h"
 #include "fenediteradherent.h"
 #include "fencrediteradherent.h"
+#include "fenajouterbeneficiaire.h"
 
 #include <iostream>
 
@@ -103,6 +104,7 @@ FenPlascilabApp::FenPlascilabApp(QWidget *parent) : QWidget(parent), ui(new Ui::
 
     // Boutons d'administration
 
+    connect(ui->bRecherche, SIGNAL(released()), this, SLOT(rechercherAdherent()));
     connect(ui->bRafraichir, SIGNAL(released()), this, SLOT(affVueAdherents()));
     connect(ui->bAbnNonAJour, SIGNAL(released()), this, SLOT(affVueAdherentsNonAJour()));
     connect(ui->bAjouterAdh, SIGNAL(released()), this, SLOT(ajouterAdherent()));
@@ -110,9 +112,16 @@ FenPlascilabApp::FenPlascilabApp(QWidget *parent) : QWidget(parent), ui(new Ui::
     connect(ui->bCrediterAdh, SIGNAL(released()), this, SLOT(crediterAdherent()));
     connect(ui->bSupprimerAdh, SIGNAL(released()), this, SLOT(supprimerAdherent()));
 
+    connect(ui->bAjouterBeneficiaire, SIGNAL(released()), this, SLOT(ajouterBeneficiaire()));
+    connect(ui->bSupprimerBeneficiaire, SIGNAL(released()), this, SLOT(supprimerBeneficiaire()));
+
     // Vue des tables
 
     connect(ui->vueTableAdherents, SIGNAL(clicked(QModelIndex)), this, SLOT(activationBoutonsEdition()));
+
+    // Services
+
+    connect(ui->bEteindreRPi, SIGNAL(released()), this, SLOT(eteindreRaspberry()));
 }
 
 /**
@@ -229,16 +238,41 @@ void FenPlascilabApp::receptionIDCarte(const QString &donnees) {
     QString idCarteHex(idToHex(donnees));
 
     QSqlQuery requeteAdherent(*baseDonnees);
-    requeteAdherent.prepare("SELECT nom, prenom, dateDebutAbn, dateFinAbn FROM Adherents WHERE idCarte = :_idCarte");
+    requeteAdherent.prepare("SELECT nom, prenom, dureeAbn, dateDebutAbn, dateFinAbn FROM Adherents WHERE idCarte = :_idCarte");
     requeteAdherent.bindValue(":_idCarte", idCarteHex);
     requeteAdherent.exec();
     requeteAdherent.last();
 
     ui->affBadgeID->setText(idCarteHex.toUpper());
-    ui->affBadgeNom->setText(requeteAdherent.value(0).toString());
-    ui->affBadgePrenom->setText(requeteAdherent.value(1).toString());
-    ui->affBadgeDebutAbn->setText(requeteAdherent.value(2).toDate().toString("dd/MM/yyyy"));
-    ui->affBadgeFinAbn->setText(requeteAdherent.value(3).toDate().toString("dd/MM/yyyy"));
+    if(requeteAdherent.isValid()) {
+        ui->affBadgeNom->setText(requeteAdherent.value(0).toString());
+        ui->affBadgePrenom->setText(requeteAdherent.value(1).toString());
+        if(requeteAdherent.value(2) != "Aucun") {
+            QDate dateDebutAbn(requeteAdherent.value(3).toDate());
+            QDate dateFinAbn(requeteAdherent.value(4).toDate());
+            ui->affBadgeDebutAbn->setText(dateDebutAbn.toString("dd/MM/yyyy"));
+            ui->affBadgeFinAbn->setText(dateFinAbn.toString("dd/MM/yyyy"));
+            if(dateDebutAbn > QDate::currentDate() || dateFinAbn < QDate::currentDate()) {
+                ui->labelAbonnementValide->setText("<html><head/><body><p><span style=\" font-size:16pt; font-weight:600; color:#ff0000;\">Votre abonnement n'est plus valide</span></p></body></html>");
+            }
+            else {
+                 ui->labelAbonnementValide->setText("<html><head/><body><p><span style=\" font-size:16pt; font-weight:600; color:#009900;\">Abonnement valide</span></p></body></html>");
+            }
+        }
+        else {
+            ui->affBadgeDebutAbn->setText("Aucun abonnement souscrit");
+            ui->affBadgeFinAbn->setText("Aucun abonnement souscrit");
+            ui->labelAbonnementValide->setText("<html><head/><body><p><span style=\" font-size:16pt; font-weight:600; color:#ff6600;\">Aucun abonnement souscrit</span></p></body></html>");
+        }
+
+    }
+    else {
+        ui->affBadgeNom->setText("<Badge non attribué>");
+        ui->affBadgePrenom->setText("<Badge non attribué>");
+        ui->affBadgeDebutAbn->setText("<Badge non attribué>");
+        ui->affBadgeFinAbn->setText("<Badge non attribué>");
+        ui->labelAbonnementValide->setText("<html><head/><body><p><span style=\" font-size:16pt; font-weight:600; color:#ff6600;\">Badge non attribué</span></p></body></html>");
+    }
 }
 
 /**
@@ -260,6 +294,9 @@ bool FenPlascilabApp::connexionBaseAdmin() {
         return false;
     }
 
+    ui->bConnexion->setEnabled(false);
+    this->setCursor(Qt::WaitCursor);
+
     baseAdmin->setUserName(fenConnexion->getUtilisateur());
     baseAdmin->setPassword(fenConnexion->getMotPasse());
     baseAdmin->setDatabaseName("Driver={MySQL ODBC 8.0 Unicode Driver};"
@@ -271,6 +308,9 @@ bool FenPlascilabApp::connexionBaseAdmin() {
     delete fenConnexion;
 
     if(!baseAdmin->open()) {
+        ui->bConnexion->setEnabled(true);
+        this->setCursor(Qt::ArrowCursor);
+
         QMessageBox::critical(this, "Erreur", "Erreur d'authentification. Vérifiez que la base de donnée est accessible et que vos identfiants sont corrects.");
         baseAdmin->close();
         return false;
@@ -284,6 +324,9 @@ bool FenPlascilabApp::connexionBaseAdmin() {
     ui->bConnexion->setText("Déconnexion");
 
     affVueAdherents();
+
+    ui->bConnexion->setEnabled(true);
+    this->setCursor(Qt::ArrowCursor);
 
     return true;
 }
@@ -429,6 +472,41 @@ void FenPlascilabApp::affDetails() {
 
 }
 
+void FenPlascilabApp::rechercherAdherent() {
+
+    QSqlQuery requeteRecherche(*baseAdmin);
+    requeteRecherche.prepare("SELECT id, idCarte, typeAdhesion, nom, prenom, designation, adresse, cp, ville, tel, mail, dureeAbn, dateDebutAbn, dateFinAbn FROM Adherents WHERE idCarte LIKE :_recherche OR nom LIKE :_recherche OR prenom LIKE :_recherche");
+    requeteRecherche.bindValue(":_recherche", "%" + ui->lineRecherche->text() + "%");
+
+    requeteRecherche.exec();
+    requeteRecherche.last();
+
+    if(requeteRecherche.lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur lors de la recherche", requeteRecherche.lastError().text());
+        return;
+    }
+
+    modeleAdherents->setQuery(requeteRecherche);
+    modeleAdherents->setHeaderData(0, Qt::Horizontal, "N° Adhérent");
+    modeleAdherents->setHeaderData(1, Qt::Horizontal, "ID Carte");
+    modeleAdherents->setHeaderData(2, Qt::Horizontal, "Type d'adhésion");
+    modeleAdherents->setHeaderData(3, Qt::Horizontal, "Nom");
+    modeleAdherents->setHeaderData(4, Qt::Horizontal, "Prénom");
+    modeleAdherents->setHeaderData(5, Qt::Horizontal, "Désignation");
+    modeleAdherents->setHeaderData(6, Qt::Horizontal, "Adresse");
+    modeleAdherents->setHeaderData(7, Qt::Horizontal, "CP");
+    modeleAdherents->setHeaderData(8, Qt::Horizontal, "Ville");
+    modeleAdherents->setHeaderData(9, Qt::Horizontal, "Tel");
+    modeleAdherents->setHeaderData(10, Qt::Horizontal, "Mail");
+    modeleAdherents->setHeaderData(11, Qt::Horizontal, "Abonnement");
+    modeleAdherents->setHeaderData(12, Qt::Horizontal, "Début");
+    modeleAdherents->setHeaderData(13, Qt::Horizontal, "Fin");
+
+    ui->vueTableAdherents->setModel(modeleAdherents);
+    ui->vueTableAdherents->show();
+
+}
+
 /**
  * @brief FenPlascilabApp::ajouterAdherent Affiche une fenêtre permettant d'ajouter un adhérent et ajoute cet adhérent à la base de données
  */
@@ -443,8 +521,7 @@ void FenPlascilabApp::ajouterAdherent() {
     }
 
     QSqlQuery requeteAjout(*baseAdmin);
-    requeteAjout.prepare("INSERT INTO Adherents VALUES (NULL, :_idCarte, :_typeAdhesion, :_nom, :_prenom, :_designation, :_adresse, :_cp, :_ville, :_tel, :_mail, :_dureeAbn, :_nbAbn, :_dateDebutAbn, :_dateFinAbn);"
-                         "INSERT INTO Beneficiaires VALUES ((SELECT MAX(id) FROM Adherents), :_nom, :_prenom);");
+    requeteAjout.prepare("INSERT INTO Adherents VALUES (NULL, :_idCarte, :_typeAdhesion, :_nom, :_prenom, :_designation, :_adresse, :_cp, :_ville, :_tel, :_mail, :_dureeAbn, :_nbAbn, :_dateDebutAbn, :_dateFinAbn);");
     requeteAjout.bindValue(":_idCarte", fenAjouterAdherent.getID());
     requeteAjout.bindValue(":_typeAdhesion", fenAjouterAdherent.getTypeAdhesion());
     requeteAjout.bindValue(":_nom", fenAjouterAdherent.getNom());
@@ -464,7 +541,30 @@ void FenPlascilabApp::ajouterAdherent() {
     requeteAjout.last();
 
     if(requeteAjout.lastError().isValid()) {
-        QMessageBox::critical(this, "Erreur", requeteAjout.lastError().text());
+        QMessageBox::critical(this, "Erreur ajout de l'adhérent", requeteAjout.lastError().text());
+        return;
+    }
+
+    requeteAjout.exec("SELECT MAX(id) FROM Adherents;");
+    requeteAjout.last();
+    int idAdherent = requeteAjout.value(0).toInt();
+
+    if(requeteAjout.lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur sélection de l'ID maximal", requeteAjout.lastError().text());
+        return;
+    }
+
+    requeteAjout.prepare("INSERT INTO Beneficiaires VALUES (:_id, :_nom, :_prenom)");
+    requeteAjout.bindValue(":_id", idAdherent);
+    requeteAjout.bindValue(":_nom", fenAjouterAdherent.getNom());
+    requeteAjout.bindValue(":_prenom", fenAjouterAdherent.getPrenom());
+
+    requeteAjout.exec();
+    requeteAjout.last();
+
+
+    if(requeteAjout.lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur ajout du bénéficiaire", requeteAjout.lastError().text());
         return;
     }
 
@@ -584,6 +684,10 @@ void FenPlascilabApp::crediterAdherent() {
 
 void FenPlascilabApp::supprimerAdherent() {
 
+    if(!idAdherentSelectionneIsValid()) {
+        return;
+    }
+
     QSqlQuery requeteSuppresion(*baseAdmin);
     requeteSuppresion.prepare("SELECT id, nom, prenom FROM Adherents WHERE id = (:_id)");
     requeteSuppresion.bindValue(":_id", ui->vueTableAdherents->model()->index(ui->vueTableAdherents->selectionModel()->selectedIndexes().at(0).row(), 0).data().toInt());
@@ -632,6 +736,88 @@ void FenPlascilabApp::cacherDetails() {
 
 }
 
+void FenPlascilabApp::ajouterBeneficiaire() {
+
+    if(!idAdherentSelectionneIsValid()) {
+        return;
+    }
+
+    int idAdherent(getIDAdherentSelectionne());
+
+    FenAjouterBeneficiaire fenAjouterBeneficiaire(this);
+    fenAjouterBeneficiaire.exec();
+
+    if(fenAjouterBeneficiaire.result() == QDialog::Rejected) {
+        return;
+    }
+
+    QSqlQuery requeteAjout(*baseAdmin);
+    requeteAjout.prepare("INSERT INTO Beneficiaires VALUES (:_id, :_nom, :_prenom)");
+    requeteAjout.bindValue(":_id", idAdherent);
+    requeteAjout.bindValue(":_nom", fenAjouterBeneficiaire.getNom());
+    requeteAjout.bindValue(":_prenom", fenAjouterBeneficiaire.getPrenom());
+
+    requeteAjout.exec();
+    requeteAjout.last();
+
+    if(requeteAjout.lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", requeteAjout.lastError().text());
+        return;
+    }
+
+    affVueBeneficiaires();
+}
+
+void FenPlascilabApp::supprimerBeneficiaire() {
+
+    int idBeneficiaire = ui->affID->text().toInt();
+    QString nomBeneficiaire = ui->vueTableBeneficiaire->model()->index(ui->vueTableBeneficiaire->selectionModel()->selectedIndexes().at(0).row(), 0).data().toString();
+    QString prenomBeneficiaire = ui->vueTableBeneficiaire->model()->index(ui->vueTableBeneficiaire->selectionModel()->selectedIndexes().at(0).row(), 1).data().toString();
+
+    QSqlQuery requeteSuppresion(*baseAdmin);
+    requeteSuppresion.prepare("SELECT id, nom, prenom FROM Beneficiaires WHERE id = :_id AND nom = :_nom AND prenom = :_prenom");
+    requeteSuppresion.bindValue(":_id", idBeneficiaire);
+    requeteSuppresion.bindValue(":_nom", nomBeneficiaire);
+    requeteSuppresion.bindValue(":_prenom", prenomBeneficiaire);
+
+    requeteSuppresion.exec();
+    requeteSuppresion.last();
+
+    if(requeteSuppresion.lastError().isValid()) {
+        QMessageBox::critical(this, "Erreur", requeteSuppresion.lastError().text());
+        return;
+    }
+
+    int reponse = QMessageBox::question(this, "Supprimer un bénéficiaire", "Etes-vous sûr de vouloir supprimer le bénéficiaire " +
+                                        requeteSuppresion.value(2).toString() + " " +
+                                        requeteSuppresion.value(1).toString() + " (ID : " +
+                                        requeteSuppresion.value(0).toString() + ") de la base de données ?",
+                                        QMessageBox::Yes | QMessageBox::No);
+
+    if(reponse == QMessageBox::No) {
+        return;
+    }
+    else {
+        requeteSuppresion.prepare("DELETE FROM Beneficiaires WHERE id = :_id AND nom = :_nom AND prenom = :_prenom");
+        requeteSuppresion.bindValue(":_id", idBeneficiaire);
+        requeteSuppresion.bindValue(":_nom", nomBeneficiaire);
+        requeteSuppresion.bindValue(":_prenom", prenomBeneficiaire);
+
+        requeteSuppresion.exec();
+        requeteSuppresion.last();
+
+        if(requeteSuppresion.lastError().isValid()) {
+            QMessageBox::critical(this, "Erreur", requeteSuppresion.lastError().text());
+            return;
+        }
+    }
+
+    affVueBeneficiaires();
+    return;
+
+}
+
+
 /**
  * @brief FenPlascilabApp::activationBoutonsEdition Active les boutons d'édition
  */
@@ -662,7 +848,7 @@ void FenPlascilabApp::desactivationBoutonsEdition() {
 }
 
 bool FenPlascilabApp::idAdherentSelectionneIsValid() const {
-    return !ui->vueTableAdherents->selectionModel()->selectedIndexes().isEmpty() && ui->vueTableAdherents->selectionModel()->selectedIndexes().at(0).isValid();
+    return !ui->vueTableAdherents->selectionModel()->selection().isEmpty() && ui->vueTableAdherents->selectionModel()->selectedIndexes().at(0).isValid();
 }
 
 int FenPlascilabApp::getIDAdherentSelectionne() const {

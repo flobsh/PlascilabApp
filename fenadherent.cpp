@@ -81,7 +81,7 @@ FenAdherent::FenAdherent(QWidget *parent) : QDialog(parent) {
     connect(dateDebutAbn, SIGNAL(dateChanged(QDate)), this, SLOT(changementDateDebut()));
     connect(dateFinAbn, SIGNAL(dateChanged(QDate)), this, SLOT(changementDateFin()));
     connect(bAnnuler, SIGNAL(released()), this, SLOT(reject()));
-    connect(bOK, SIGNAL(released()), this, SLOT(accept()));
+    connect(bOK, SIGNAL(released()), this, SLOT(accepter()));
 }
 
 void FenAdherent::changementAbonnement() {
@@ -128,6 +128,10 @@ void FenAdherent::changementDateFin() {
     else if(comboAbonnement->currentIndex() == 2) {
         dateDebutAbn->setDate(dateFinAbn->date().addYears(-spinNbAbn->value()));
     }
+}
+
+void FenAdherent::accepter() {
+    accept();
 }
 
 QString FenAdherent::getID() const {

@@ -33,6 +33,7 @@ FenConnexion::FenConnexion(QWidget *parent) : QDialog(parent) {
     layoutConnexion->addStretch();
 
     this->setWindowTitle("Connexion à la base de données");
+    this->setFixedSize(300, 139);
     this->setLayout(layoutConnexion);
 
     connect(bAnnuler, SIGNAL(released()), this, SLOT(reject()));

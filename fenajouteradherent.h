@@ -16,6 +16,9 @@ public:
     FenAjouterAdherent(QWidget *parent, Serveur *serveur);
     ~FenAjouterAdherent();
 
+private slots:
+    void accepter();
+
 public slots:
     void badgeID(QString const& donnees);
 

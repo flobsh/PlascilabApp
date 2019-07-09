@@ -30,6 +30,8 @@ FenAjouterAdherent::FenAjouterAdherent(QWidget *parent) : FenAdherent(parent) {
     // Boutons
 
     bOK->setText("Ajouter adhérent");
+
+    this->setFixedSize(300,484);
 }
 
 FenAjouterAdherent::FenAjouterAdherent(QWidget *parent, Serveur *serveur) : FenAjouterAdherent(parent) {
@@ -44,6 +46,11 @@ void FenAjouterAdherent::badgeID(const QString &donnees) {
     lineID->setText(FenPlascilabApp::idToHex(donnees));
 }
 
+void FenAjouterAdherent::accepter() {
+
+    accept();
+}
+
 FenAjouterAdherent::~FenAjouterAdherent() {
-    delete serveur;
+    serveur = nullptr;
 }

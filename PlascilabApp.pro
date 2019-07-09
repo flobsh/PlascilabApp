@@ -21,6 +21,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         fenadherent.cpp \
         fenajouteradherent.cpp \
+        fenajouterbeneficiaire.cpp \
         fenconnexion.cpp \
         fencrediteradherent.cpp \
         fenediteradherent.cpp \
@@ -37,6 +38,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     fenadherent.h \
     fenajouteradherent.h \
+    fenajouterbeneficiaire.h \
     fenconnexion.h \
     fencrediteradherent.h \
     fenediteradherent.h \
